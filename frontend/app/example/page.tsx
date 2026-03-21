@@ -145,7 +145,7 @@ export default function ExamplePage() {
       });
       gsap.from('.gallery-wrap', {
         opacity: 0, duration: 0.8, ease: 'power2.out', delay: 0.15,
-        onComplete: () => gsap.set('.gallery-wrap', { clearProps: 'all' }),
+        onComplete: () => { gsap.set('.gallery-wrap', { clearProps: 'all' }); },
         scrollTrigger: { trigger: galleryRef.current, start: 'top 85%', once: true },
       });
     }, galleryRef);
