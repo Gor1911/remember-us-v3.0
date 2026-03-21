@@ -41,13 +41,18 @@ if [ ! -f .env.prod ]; then
     exit 0
 fi
 
+DC="docker compose --env-file .env.prod"
+
 echo "==> Building and starting containers..."
-docker compose down --remove-orphans
-docker compose build --no-cache
-docker compose up -d
+$DC down --remove-orphans
+$DC build --no-cache
+$DC up -d
+
+echo "==> Waiting for backend to be ready..."
+sleep 10
 
 echo "==> Creating Django superuser (if not exists)..."
-docker compose exec -T backend python manage.py shell -c "
+$DC exec -T backend python manage.py shell -c "
 from apps.users.models import User
 if not User.objects.filter(email='admin@remember-us.local').exists():
     u = User.objects.create_superuser('admin@remember-us.local', 'Admin1234!')
