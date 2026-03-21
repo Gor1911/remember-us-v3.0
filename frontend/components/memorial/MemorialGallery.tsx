@@ -19,11 +19,9 @@ function mediaToPhotos(files: MediaFile[]): GalleryPhoto[] {
     .filter((f) => f.media_type === 'photo' || f.media_type === 'portrait')
     .sort((a, b) => a.order - b.order)
     .map((f, i) => {
-      let src = f.file_url;
-      try { src = new URL(f.file_url).pathname; } catch { /* relative path — keep as is */ }
       return {
         id: f.id,
-        src,
+        src: f.file_url,
         alt: f.alt_text || f.caption || 'Memorial photo',
         caption: f.caption || undefined,
         featured: i === 0,

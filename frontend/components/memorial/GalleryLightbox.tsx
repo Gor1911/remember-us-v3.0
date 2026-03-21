@@ -58,6 +58,7 @@ export function GalleryLightbox({ photos }: Props) {
               src={photo.src}
               alt={photo.alt}
               fill
+              unoptimized
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -82,6 +83,7 @@ export function GalleryLightbox({ photos }: Props) {
                 src={photos[index].src}
                 alt={photos[index].alt}
                 fill
+                unoptimized
                 className="object-contain"
                 priority
               />
@@ -146,7 +148,7 @@ export function GalleryLightbox({ photos }: Props) {
                       : 'border-white/10 opacity-40 hover:opacity-70'
                   }`}
                 >
-                  <Image src={p.src} alt="" fill className="object-cover" />
+                  <Image src={p.src} alt="" fill unoptimized className="object-cover" />
                 </button>
               ))}
             </div>

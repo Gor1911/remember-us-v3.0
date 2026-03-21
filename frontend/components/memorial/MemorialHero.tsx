@@ -8,14 +8,6 @@ import type { MemorialPageDetail } from '@/app/lib/types';
 
 gsap.registerPlugin(ScrollTrigger);
 
-function toProxyUrl(url: string): string {
-  try {
-    const { pathname } = new URL(url);
-    return pathname;
-  } catch {
-    return url;
-  }
-}
 
 interface MemorialHeroProps {
   memorial: MemorialPageDetail;
@@ -93,9 +85,10 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
           >
             {portrait ? (
               <Image
-                src={toProxyUrl(portrait.file_url)}
+                src={portrait.file_url}
                 alt={portrait.alt_text || memorial.full_name}
                 fill priority
+                unoptimized
                 className="object-cover object-center"
               />
             ) : (
