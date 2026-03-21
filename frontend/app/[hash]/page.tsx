@@ -16,13 +16,15 @@ type FetchState =
   | { status: 'moderation'; state: string }
   | { status: 'not_found' };
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api/v1';
+
 async function fetchMemorial(slug: string): Promise<FetchState> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    const res = await fetch(`http://127.0.0.1:8000/api/v1/pages/${slug}/`, { headers });
+    const res = await fetch(`${API_BASE}/pages/${slug}/`, { headers });
     if (!res.ok) return { status: 'not_found' };
     const json = await res.json() as { success: boolean; data?: MemorialPageDetail };
     if (!json.success || !json.data) return { status: 'not_found' };
