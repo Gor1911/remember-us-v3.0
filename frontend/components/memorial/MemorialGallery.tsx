@@ -45,7 +45,7 @@ export const MemorialGallery = ({ mediaFiles }: MemorialGalleryProps) => {
       // opacity only — no y/transform so fixed lightbox overlay isn't trapped
       gsap.from('.mg-wrap', {
         opacity: 0, duration: 0.8, ease: 'power2.out', delay: 0.15,
-        onComplete: () => gsap.set('.mg-wrap', { clearProps: 'all' }),
+        onComplete: () => { gsap.set('.mg-wrap', { clearProps: 'all' }); },
         scrollTrigger: { trigger: sectionRef.current, start: 'top 85%', once: true },
       });
     }, sectionRef);
