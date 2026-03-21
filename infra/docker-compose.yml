@@ -74,6 +74,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: http://188.214.107.148/api/v1
+        NEXT_PUBLIC_MEDIA_HOST: "188.214.107.148"
         BACKEND_INTERNAL_URL: http://backend:8000
         BACKEND_MEDIA_HOST: backend
         BACKEND_MEDIA_PORT: "8000"
