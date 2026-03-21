@@ -7,7 +7,7 @@ const backendPort = process.env.BACKEND_MEDIA_PORT || "8000";
 // Public hostname where media URLs point (e.g. VPS IP or domain)
 const publicHost = process.env.NEXT_PUBLIC_MEDIA_HOST || "";
 
-const remotePatterns: NextConfig["images"]["remotePatterns"] = [
+const remotePatterns: NonNullable<NonNullable<NextConfig["images"]>["remotePatterns"]> = [
   { protocol: "http", hostname: backendHost, port: backendPort, pathname: "/media/**" },
   { protocol: "http", hostname: "127.0.0.1", port: "8000", pathname: "/media/**" },
   { protocol: "http", hostname: "localhost", port: "8000", pathname: "/media/**" },
