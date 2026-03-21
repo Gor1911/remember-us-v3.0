@@ -43,19 +43,6 @@ fi
 
 DC="docker compose --env-file .env.prod"
 
-echo "==> Generating .htpasswd for Basic Auth..."
-if ! command -v htpasswd &> /dev/null; then
-    apt-get update -qq && apt-get install -y apache2-utils -qq
-fi
-BASIC_USER=$(grep "^BASIC_AUTH_USER=" .env.prod | cut -d= -f2)
-BASIC_PASS=$(grep "^BASIC_AUTH_PASSWORD=" .env.prod | cut -d= -f2)
-if [ -z "$BASIC_USER" ] || [ -z "$BASIC_PASS" ]; then
-    echo "  [!] Set BASIC_AUTH_USER and BASIC_AUTH_PASSWORD in .env.prod"
-    exit 1
-fi
-htpasswd -bc nginx/.htpasswd "$BASIC_USER" "$BASIC_PASS"
-echo "  Basic Auth user: $BASIC_USER"
-
 echo "==> Building and starting containers..."
 $DC down --remove-orphans
 $DC build --no-cache
