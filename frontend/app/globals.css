@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* === Colors === */
+  --color-background: #0D1117;
+  --color-surface: #161B22;
+  --color-border: #21262D;
+
+  --color-text-primary: #FFFFFF;
+  --color-text-muted: #8B949E;
+  --color-aluminum: #B8C0CC;
+
+  /* Military */
+  --color-military-bg: #0A0F1E;
+  --color-liberty-blue: #1B2D4E;
+  --color-honor-red: #8B0000;
+  --color-titanium: #9BA4B5;
+
+  /* Typography */
+  --font-sans: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+
+  /* Radius */
+  --radius-card: 32px;
+  --radius-btn: 14px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin:0;
+    padding: 0;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #0D1117;
+  color: #FFFFFF;
+  font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0D1117; }
+::-webkit-scrollbar-thumb { background: #21262D; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8B949E; }
+
+/* Centred content wrapper */
+.site-container {
+  width: min(100%, 1280px);
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+/* Bento cell inner padding */
+.bento-pad {
+  padding: 1.5rem 1.5rem 1.5rem 2.5rem;
+}
+
+.bento-pad-lg {
+  padding: 2rem 2rem 2rem 3rem;
+}
+
+/* Glass card utility */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+}
+
+/* Text utilities */
+.text-allcaps {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+}
+
+/* Selection */
+::selection {
+  background: rgba(139, 0, 0, 0.3);
+  color: #fff;
+}
+
