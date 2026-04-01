@@ -21,14 +21,14 @@ const TimelineRow = ({ entry, isLast }: TimelineRowProps) => (
     <div className="flex flex-col items-center shrink-0">
       <div className="w-2 h-2 rounded-full bg-[#8B0000] mt-[3px]" />
       {!isLast && (
-        <div className="w-px flex-1 bg-white/[0.06] my-1 min-h-[40px]" />
+        <div className="w-px flex-1 bg-[#1A1614]/[0.08] my-1 min-h-[40px]" />
       )}
     </div>
     <div className="pb-6">
       <span className="text-[#8B0000] text-xs font-mono">{entry.year}</span>
-      <p className="text-white font-medium text-sm mt-0.5">{entry.title}</p>
+      <p className="text-[#1A1614] font-medium text-sm mt-0.5">{entry.title}</p>
       {entry.description && (
-        <p className="text-white/40 text-sm leading-relaxed mt-0.5">{entry.description}</p>
+        <p className="text-[#1A1614]/40 text-sm leading-relaxed mt-0.5">{entry.description}</p>
       )}
     </div>
   </div>
@@ -58,17 +58,16 @@ export const MemorialBio = ({ memorial }: MemorialBioProps) => {
   if (!hasContent) return null;
 
   return (
-    <section ref={sectionRef} className="border-t border-white/[0.06]">
+    <section ref={sectionRef} className="border-t border-[#1A1614]/[0.08]">
       <div className="site-container py-16">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 gap-8">
 
-            {/* Timeline */}
             {sortedEntries.length > 0 && (
-              <div className="bio-card bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-[32px] p-8 flex flex-col gap-6">
+              <div className="bio-card glass rounded-[32px] p-8 flex flex-col gap-6">
                 <div className="flex items-center gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-                  <span className="text-[#9BA4B5] text-[11px] uppercase tracking-[0.12em] font-medium">
+                  <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.12em] font-medium">
                     Life Events
                   </span>
                 </div>

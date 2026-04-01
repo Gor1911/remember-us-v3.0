@@ -50,7 +50,7 @@ export function GalleryLightbox({ photos }: Props) {
           <button
             key={photo.id}
             onClick={() => open(i)}
-            className={`relative overflow-hidden rounded-[20px] bg-white/[0.04] border border-white/[0.08] group cursor-zoom-in ${
+            className={`relative overflow-hidden rounded-[20px] bg-[#1A1614]/[0.04] border border-[#1A1614]/[0.08] group cursor-zoom-in ${
               photo.featured ? 'lg:col-span-2 lg:row-span-2' : ''
             }`}
           >

@@ -25,7 +25,6 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
   const heroRef   = useRef<HTMLDivElement>(null);
   const nameRef   = useRef<HTMLDivElement>(null);
   const portrait  = memorial.media_files.find((f) => f.is_primary_portrait);
-  const bgColor   = memorial.page_type === 'military' ? '#0A0F1E' : '#0D1117';
   const dateRange = formatDateRange(memorial.birth_date, memorial.death_date);
 
   // Portrait entrance
@@ -61,8 +60,7 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
       {/* ── Hero background + portrait ─────────────────────────────────── */}
       <div
         ref={heroRef}
-        className="relative h-[45vh] min-h-[320px] pt-16"
-        style={{ background: bgColor }}
+        className="relative h-[45vh] min-h-[320px] pt-16 bg-[#F3F0EB]"
       >
         {/* Arlington background */}
         <div className="absolute inset-0 overflow-hidden">
@@ -73,15 +71,15 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
             aria-hidden="true"
             className="object-cover object-center opacity-35 blur-[2px] scale-[1.06]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0A0F1E]/70 via-[#0A0F1E]/20 to-[#0A0F1E]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_50%,#0A0F1E_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#F3F0EB]/70 via-[#F3F0EB]/20 to-[#F3F0EB]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_50%,#F3F0EB_100%)]" />
         </div>
 
         {/* Portrait — overflows below hero */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[35%] z-10">
           <div
-            className="portrait-card relative w-72 h-[440px] md:w-72 md:h-[460px] rounded-[28px] overflow-hidden border border-white/10"
-            style={{ boxShadow: '0 0 0 8px rgba(139,0,0,0.10), 0 40px 80px rgba(0,0,0,0.8)', opacity: 0, transform: 'translateY(40px)' }}
+            className="portrait-card relative w-72 h-[440px] md:w-72 md:h-[460px] rounded-[28px] overflow-hidden border border-[#1A1614]/10"
+            style={{ boxShadow: '0 0 0 8px rgba(139,0,0,0.08), 0 40px 80px rgba(26,22,20,0.15)', opacity: 0, transform: 'translateY(40px)' }}
           >
             {portrait ? (
               <Image
@@ -92,11 +90,11 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
                 className="object-cover object-center"
               />
             ) : (
-              <div className="w-full h-full bg-white/[0.04] flex items-center justify-center">
-                <span className="text-white/20 text-4xl">👤</span>
+              <div className="w-full h-full bg-[#1A1614]/[0.04] flex items-center justify-center">
+                <span className="text-[#1A1614]/20 text-4xl">👤</span>
               </div>
             )}
-            <div className="absolute inset-0 rounded-[28px] ring-1 ring-inset ring-white/10" />
+            <div className="absolute inset-0 rounded-[28px] ring-1 ring-inset ring-[#1A1614]/10" />
           </div>
 
           {/* Badge */}
@@ -115,34 +113,33 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
       {/* ── Name + Bio ─────────────────────────────────────────────────── */}
       <div
         ref={nameRef}
-        className="site-container text-center pt-[190px] md:pt-[200px] pb-16"
-        style={{ background: bgColor }}
+        className="site-container text-center pt-[190px] md:pt-[200px] pb-16 bg-[#FAF8F5]"
       >
         <div className="name-label flex items-center justify-center gap-2 mb-4">
           <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-          <span className="text-[#9BA4B5] text-[11px] uppercase tracking-[0.14em] font-medium">
+          <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.14em] font-medium">
             In Memory Of
           </span>
         </div>
 
-        <h1 className="name-h1 text-white font-bold text-3xl xl:text-[40px] tracking-tight leading-tight mb-2">
+        <h1 className="name-h1 text-[#1A1614] font-bold text-3xl xl:text-[40px] tracking-tight leading-tight mb-2">
           {memorial.full_name}
         </h1>
 
         <div className="name-meta">
           {memorial.page_type === 'military' && (memorial.military_rank || memorial.military_branch) && (
-            <p className="text-white/40 text-sm font-mono">
+            <p className="text-[#1A1614]/40 text-sm font-mono">
               {[memorial.military_rank, memorial.military_branch].filter(Boolean).join(' · ')}
             </p>
           )}
           {dateRange && (
-            <p className="text-white/25 text-sm mt-1 tracking-widest">{dateRange}</p>
+            <p className="text-[#1A1614]/25 text-sm mt-1 tracking-widest">{dateRange}</p>
           )}
         </div>
 
         {/* Biography inline */}
         {memorial.biography && (
-          <div className="flex flex-col gap-4 text-white/50 text-base leading-relaxed max-w-2xl mx-auto mt-8 text-left">
+          <div className="flex flex-col gap-4 text-[#1A1614]/55 text-base leading-relaxed max-w-2xl mx-auto mt-8 text-left">
             {memorial.biography.split('\n\n').filter(Boolean).map((para, i) => (
               <p key={i} className="bio-para">{para}</p>
             ))}
