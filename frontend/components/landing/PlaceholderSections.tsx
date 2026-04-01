@@ -40,23 +40,23 @@ export function LivingPortraitSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="how" className="bg-[#0A0F1E] py-20 border-t border-white/[0.06]">
+    <section ref={sectionRef} id="how" className="bg-[#FAF8F5] py-20 border-t border-[#1A1614]/[0.06]">
       <div className="site-container">
         <div className="lp-label flex items-center gap-2.5 mb-6">
           <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-          <span className="uppercase text-[#9BA4B5] text-[11px] tracking-[0.12em] font-medium">
+          <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">
             Living Portrait
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col gap-6">
-            <h2 className="lp-heading text-white font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
+            <h2 className="lp-heading text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
               A portrait that
               <br />
-              <span className="text-[#9BA4B5]">looks back at you.</span>
+              <span className="text-[#8A7F74]">looks back at you.</span>
             </h2>
-            <p className="lp-body text-white/50 text-base leading-relaxed max-w-md">
+            <p className="lp-body text-[#1A1614]/50 text-base leading-relaxed max-w-md">
               LivePortrait technology brings a photograph to life. Eyes move,
               expressions breathe — as if the person is present beside you.
             </p>
@@ -66,7 +66,7 @@ export function LivingPortraitSection() {
                 'Natural micro-movements',
                 'Triggered on scroll',
               ].map((item) => (
-                <li key={item} className="lp-item flex items-center gap-3 text-white/60 text-sm">
+                <li key={item} className="lp-item flex items-center gap-3 text-[#1A1614]/60 text-sm">
                   <span className="w-1 h-1 rounded-full bg-[#8B0000] shrink-0" />
                   {item}
                 </li>
@@ -76,8 +76,8 @@ export function LivingPortraitSection() {
 
           <div className="flex justify-center">
             <div
-              className="lp-mockup relative w-[240px] h-[480px] rounded-[48px] overflow-hidden border border-white/[0.12]"
-              style={{ boxShadow: '0 0 0 8px rgba(139,0,0,0.08), 0 40px 80px rgba(0,0,0,0.7)' }}
+              className="lp-mockup relative w-[240px] h-[480px] rounded-[48px] overflow-hidden border border-[#1A1614]/[0.12]"
+              style={{ boxShadow: '0 0 0 8px rgba(139,0,0,0.06), 0 40px 80px rgba(26,22,20,0.12)' }}
             >
               <video
                 src="/images/veteran_mp4.mp4"
@@ -87,11 +87,11 @@ export function LivingPortraitSection() {
                 playsInline
                 className="absolute inset-0 w-full h-full object-cover object-center"
               />
-              <div className="absolute inset-0 rounded-[48px] ring-1 ring-inset ring-white/10" />
+              <div className="absolute inset-0 rounded-[48px] ring-1 ring-inset ring-[#1A1614]/10" />
               {/* Living Portrait badge */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 whitespace-nowrap">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#1A1614]/10 whitespace-nowrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000] animate-pulse" />
-                <span className="text-white/70 text-[10px] font-medium tracking-wider uppercase">Living Portrait</span>
+                <span className="text-[#1A1614]/60 text-[10px] font-medium tracking-wider uppercase">Living Portrait</span>
               </div>
             </div>
           </div>
@@ -145,19 +145,19 @@ export function FeaturesSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="examples" className="bg-[#0D1117] py-20 border-t border-white/[0.06]">
+    <section ref={sectionRef} id="examples" className="bg-[#F3F0EB] py-20 border-t border-[#1A1614]/[0.06]">
       <div className="site-container">
         <div className="feat-header text-center mb-16">
           <div className="flex items-center justify-center gap-2.5 mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-            <span className="uppercase text-[#9BA4B5] text-[11px] tracking-[0.12em] font-medium">
+            <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">
               Features
             </span>
           </div>
-          <h2 className="text-white font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
+          <h2 className="text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
             Everything you need for
             <br />
-            <span className="text-[#9BA4B5]">a meaningful tribute.</span>
+            <span className="text-[#8A7F74]">a meaningful tribute.</span>
           </h2>
         </div>
 
@@ -165,8 +165,8 @@ export function FeaturesSection() {
           {features.map(({ icon, title, desc }) => (
             <div key={title} className="feat-card glass bento-pad flex flex-col gap-4 rounded-[32px]">
               <span className="text-3xl">{icon}</span>
-              <h3 className="text-white font-semibold text-base">{title}</h3>
-              <p className="text-white/40 text-sm leading-relaxed">{desc}</p>
+              <h3 className="text-[#1A1614] font-semibold text-base">{title}</h3>
+              <p className="text-[#1A1614]/40 text-sm leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
@@ -208,7 +208,7 @@ export function QrSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="pricing" className="bg-[#0A0F1E] py-20 border-t border-white/[0.06]">
+    <section ref={sectionRef} id="pricing" className="bg-[#FAF8F5] py-20 border-t border-[#1A1614]/[0.06]">
       <div className="site-container">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
 
@@ -221,28 +221,28 @@ export function QrSection() {
                   return (
                     <div
                       key={i}
-                      className={`w-[18px] h-[18px] rounded-[4px] ${on ? 'bg-white/70' : 'bg-white/[0.06]'}`}
+                      className={`w-[18px] h-[18px] rounded-[4px] ${on ? 'bg-[#1A1614]/70' : 'bg-[#1A1614]/[0.06]'}`}
                     />
                   );
                 })}
               </div>
-              <p className="text-white/30 text-xs tracking-widest uppercase">Scan to access</p>
+              <p className="text-[#1A1614]/30 text-xs tracking-widest uppercase">Scan to access</p>
             </div>
           </div>
 
           <div className="flex flex-col gap-6 order-1 md:order-2">
             <div className="qr-label flex items-center gap-2.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-              <span className="uppercase text-[#9BA4B5] text-[11px] tracking-[0.12em] font-medium">
+              <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">
                 QR Access
               </span>
             </div>
-            <h2 className="qr-heading text-white font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
+            <h2 className="qr-heading text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
               A physical link
               <br />
-              <span className="text-[#9BA4B5]">to digital memory.</span>
+              <span className="text-[#8A7F74]">to digital memory.</span>
             </h2>
-            <p className="qr-body text-white/50 text-base leading-relaxed max-w-md">
+            <p className="qr-body text-[#1A1614]/50 text-base leading-relaxed max-w-md">
               The QR code is placed on a headstone, memorial plaque, or a frame at home.
               One scan — and the memorial opens on any screen.
             </p>
@@ -252,7 +252,7 @@ export function QrSection() {
                 'No login or password required',
                 'Works on any smartphone',
               ].map((item) => (
-                <li key={item} className="qr-item flex items-center gap-3 text-white/60 text-sm">
+                <li key={item} className="qr-item flex items-center gap-3 text-[#1A1614]/60 text-sm">
                   <span className="w-1 h-1 rounded-full bg-[#8B0000] shrink-0" />
                   {item}
                 </li>
@@ -287,21 +287,21 @@ export function CtaBanner() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-[#0D1117] py-20 border-t border-white/[0.06]">
+    <section ref={sectionRef} className="bg-[#F3F0EB] py-20 border-t border-[#1A1614]/[0.06]">
       <div className="site-container">
         <div className="cta-card glass rounded-[32px] bento-pad-lg flex flex-col items-center text-center gap-8">
           <div className="flex items-center gap-2.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000] animate-pulse" />
-            <span className="uppercase text-[#9BA4B5] text-[11px] tracking-[0.12em] font-medium">
+            <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">
               Get Started Today
             </span>
           </div>
-          <h2 className="text-white font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight max-w-2xl">
+          <h2 className="text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight max-w-2xl">
             Create a memorial
             <br />
-            <span className="text-[#9BA4B5]">that lasts forever.</span>
+            <span className="text-[#8A7F74]">that lasts forever.</span>
           </h2>
-          <p className="text-white/40 text-base leading-relaxed max-w-lg">
+          <p className="text-[#1A1614]/40 text-base leading-relaxed max-w-lg">
             A premium memorial ready in 24 hours. You provide the photos and documents —
             we take care of everything else.
           </p>
@@ -314,7 +314,7 @@ export function CtaBanner() {
             </button>
             <a
               href="/example"
-              className="px-8 py-4 glass text-white/70 hover:text-white font-medium text-sm rounded-[14px] transition-colors duration-200 no-underline"
+              className="px-8 py-4 glass text-[#1A1614]/60 hover:text-[#1A1614] font-medium text-sm rounded-[14px] transition-colors duration-200 no-underline"
             >
               View Example
             </a>

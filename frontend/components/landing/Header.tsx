@@ -52,7 +52,7 @@ export function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 ${
         scrolled || menuOpen
-          ? 'bg-[#0A0F1E]/95 backdrop-blur-xl border-white/[0.06]'
+          ? 'bg-[#FAF8F5]/95 backdrop-blur-xl border-[#1A1614]/[0.08]'
           : 'bg-transparent border-transparent'
       }`}
     >
@@ -61,8 +61,8 @@ export function Header() {
         {/* Logo */}
         <a href="/" className="flex items-center gap-2.5 no-underline">
           <span className="w-2 h-2 rounded-full bg-[#8B0000]" />
-          <span className="text-white font-semibold text-[15px] tracking-tight">
-            Remember<span className="text-[#9BA4B5] font-normal"> US</span>
+          <span className="text-[#1A1614] font-semibold text-[15px] tracking-tight">
+            Remember<span className="text-[#8A7F74] font-normal"> US</span>
           </span>
         </a>
 
@@ -72,7 +72,7 @@ export function Header() {
             <a
               key={href}
               href={href}
-              className="text-white/50 hover:text-white text-sm transition-colors duration-200 no-underline"
+              className="text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
             >
               {label}
             </a>
@@ -86,13 +86,13 @@ export function Header() {
               <>
                 <a
                   href="/dashboard"
-                  className="text-white/40 hover:text-white text-sm truncate max-w-[140px] transition-colors no-underline"
+                  className="text-[#1A1614]/40 hover:text-[#1A1614] text-sm truncate max-w-[140px] transition-colors no-underline"
                 >
                   {displayName}
                 </a>
                 <button
                   onClick={onLogout}
-                  className="px-4 py-2 text-white/50 hover:text-white text-sm transition-colors duration-200"
+                  className="px-4 py-2 text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200"
                 >
                   Sign Out
                 </button>
@@ -107,7 +107,7 @@ export function Header() {
               <>
                 <button
                   onClick={onSignInClick}
-                  className="px-4 py-2 text-white/50 hover:text-white text-sm transition-colors duration-200"
+                  className="px-4 py-2 text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200"
                 >
                   Sign In
                 </button>
@@ -128,9 +128,9 @@ export function Header() {
           className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-[6px]"
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
         >
-          <span className={`block w-5 h-px bg-white transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
-          <span className={`block w-5 h-px bg-white transition-all duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
-          <span className={`block w-5 h-px bg-white transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
+          <span className={`block w-5 h-px bg-[#1A1614] transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
+          <span className={`block w-5 h-px bg-[#1A1614] transition-all duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
+          <span className={`block w-5 h-px bg-[#1A1614] transition-all duration-300 ${menuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
         </button>
       </div>
 
@@ -142,24 +142,24 @@ export function Header() {
               key={href}
               href={href}
               onClick={closeMenu}
-              className="text-white/60 hover:text-white text-base py-3 border-b border-white/[0.06] no-underline transition-colors"
+              className="text-[#1A1614]/60 hover:text-[#1A1614] text-base py-3 border-b border-[#1A1614]/[0.06] no-underline transition-colors"
             >
               {label}
             </a>
           ))}
 
           {!loading && isAuthenticated && (
-            <div className="py-3 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="py-3 border-b border-[#1A1614]/[0.06] flex items-center justify-between">
               <a
                 href="/dashboard"
                 onClick={closeMenu}
-                className="text-white/60 hover:text-white text-sm truncate no-underline transition-colors"
+                className="text-[#1A1614]/60 hover:text-[#1A1614] text-sm truncate no-underline transition-colors"
               >
                 {displayName} · My Memorials
               </a>
               <button
                 onClick={onLogout}
-                className="text-white/40 hover:text-white text-sm transition-colors shrink-0"
+                className="text-[#1A1614]/40 hover:text-[#1A1614] text-sm transition-colors shrink-0"
               >
                 Sign Out
               </button>
@@ -176,7 +176,7 @@ export function Header() {
           {!loading && !isAuthenticated && (
             <button
               onClick={onSignInClick}
-              className="w-full py-3 text-white/50 hover:text-white text-sm transition-colors"
+              className="w-full py-3 text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors"
             >
               Sign In
             </button>

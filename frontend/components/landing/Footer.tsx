@@ -32,7 +32,7 @@ const NAV_COLUMNS = [
 
 export function Footer() {
   return (
-    <footer className="bg-[#0A0F1E] border-t border-white/[0.06]">
+    <footer className="bg-[#F3F0EB] border-t border-[#1A1614]/[0.08]">
       {/* Main block */}
       <div className="site-container py-12">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 md:gap-12">
@@ -41,27 +41,27 @@ export function Footer() {
           <div className="flex flex-col gap-5">
             <a href="/" className="flex items-center gap-2.5 no-underline w-fit">
               <span className="w-2 h-2 rounded-full bg-[#8B0000]" />
-              <span className="text-white font-semibold text-[15px] tracking-tight">
-                Remember<span className="text-[#9BA4B5] font-normal"> US</span>
+              <span className="text-[#1A1614] font-semibold text-[15px] tracking-tight">
+                Remember<span className="text-[#8A7F74] font-normal"> US</span>
               </span>
             </a>
-            <p className="text-white/40 text-sm leading-relaxed max-w-[260px]">
+            <p className="text-[#1A1614]/40 text-sm leading-relaxed max-w-[260px]">
               A premium private digital memorial. Access by QR code only.
               Built with respect for memory.
             </p>
-            <div className="flex items-center gap-2 w-fit px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03]">
+            <div className="flex items-center gap-2 w-fit px-3 py-1.5 rounded-full border border-[#1A1614]/[0.10] bg-[#1A1614]/[0.03]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000] animate-pulse" />
-              <span className="text-[#9BA4B5] text-[11px] tracking-widest uppercase font-medium">
+              <span className="text-[#8A7F74] text-[11px] tracking-widest uppercase font-medium">
                 USA · Premium
               </span>
             </div>
           </div>
 
-          {/* Nav columns — 2-col on mobile, individual on desktop */}
+          {/* Nav columns */}
           <div className="grid grid-cols-2 md:contents gap-8">
           {NAV_COLUMNS.map((col) => (
             <div key={col.title} className="flex flex-col gap-4">
-              <span className="text-white/30 text-[11px] uppercase tracking-widest font-medium">
+              <span className="text-[#1A1614]/30 text-[11px] uppercase tracking-widest font-medium">
                 {col.title}
               </span>
               <ul className="flex flex-col gap-3 list-none">
@@ -69,7 +69,7 @@ export function Footer() {
                   <li key={label}>
                     <a
                       href={href}
-                      className="text-white/50 hover:text-white text-sm transition-colors duration-200 no-underline"
+                      className="text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
                     >
                       {label}
                     </a>
@@ -83,12 +83,12 @@ export function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-white/[0.04]">
+      <div className="border-t border-[#1A1614]/[0.06]">
         <div className="site-container py-6 flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-white/20 text-xs">
+          <p className="text-[#1A1614]/20 text-xs">
             © {new Date().getFullYear()} Remember US. All rights reserved.
           </p>
-          <p className="text-white/20 text-xs tracking-wide">
+          <p className="text-[#1A1614]/20 text-xs tracking-wide">
             Designed for Eternity. Built in USA.
           </p>
         </div>

@@ -2,19 +2,19 @@
 
 @theme inline {
   /* === Colors === */
-  --color-background: #0D1117;
-  --color-surface: #161B22;
-  --color-border: #21262D;
+  --color-background: #FAF8F5;
+  --color-surface: #FFFFFF;
+  --color-border: #E8E3DB;
 
-  --color-text-primary: #FFFFFF;
-  --color-text-muted: #8B949E;
-  --color-aluminum: #B8C0CC;
+  --color-text-primary: #1A1614;
+  --color-text-muted: #6B6560;
+  --color-aluminum: #8A7F74;
 
   /* Military */
-  --color-military-bg: #0A0F1E;
+  --color-military-bg: #F0EDE8;
   --color-liberty-blue: #1B2D4E;
   --color-honor-red: #8B0000;
-  --color-titanium: #9BA4B5;
+  --color-titanium: #8A7F74;
 
   /* Typography */
   --font-sans: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
@@ -37,8 +37,8 @@ html {
 }
 
 body {
-  background: #0D1117;
-  color: #FFFFFF;
+  background: #FAF8F5;
+  color: #1A1614;
   font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -47,9 +47,9 @@ body {
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0D1117; }
-::-webkit-scrollbar-thumb { background: #21262D; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #8B949E; }
+::-webkit-scrollbar-track { background: #FAF8F5; }
+::-webkit-scrollbar-thumb { background: #D4CFC8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8A7F74; }
 
 /* Centred content wrapper */
 .site-container {
@@ -71,10 +71,10 @@ body {
 
 /* Glass card utility */
 .glass {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(26, 22, 20, 0.08);
   border-radius: 32px;
 }
 
@@ -87,7 +87,7 @@ body {
 
 /* Selection */
 ::selection {
-  background: rgba(139, 0, 0, 0.3);
-  color: #fff;
+  background: rgba(139, 0, 0, 0.15);
+  color: #1A1614;
 }
 
