@@ -97,3 +97,15 @@ def test_deleted_user_no_mail_and_token_rejected(api_client, owner):
     assert mail.outbox == []
     resp = api_client.post(CONFIRM, {"uid": uid, "token": token, "password": NEW_PASSWORD})
     assert resp.json()["code"] == "INVALID_TOKEN"
+
+
+def test_mail_failure_still_200(api_client, owner, monkeypatch):
+    """A broken mail backend must not 500 or reveal that the account exists."""
+
+    def boom(*args, **kwargs):
+        raise ConnectionRefusedError("SMTP down")
+
+    monkeypatch.setattr("apps.api.views.send_mail", boom)
+    resp = api_client.post(RESET, {"email": owner.email})
+    assert resp.status_code == 200
+    assert resp.json() == {"success": True, "data": None}

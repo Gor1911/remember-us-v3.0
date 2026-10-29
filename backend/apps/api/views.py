@@ -1,6 +1,7 @@
 """DRF viewsets — all responses wrapped in { success, data } envelope."""
 from __future__ import annotations
 
+import logging
 import os
 from uuid import UUID
 
@@ -44,6 +45,8 @@ from .serializers import (
     UserCreateSerializer,
     UserDetailSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def success(data=None, status_code: int = status.HTTP_200_OK) -> Response:
@@ -100,16 +103,21 @@ class AuthViewSet(viewsets.ViewSet):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             link = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?uid={uid}&token={token}"
-            send_mail(
-                subject="Reset your Remember US password",
-                message=(
-                    "We received a request to reset your Remember US password.\n\n"
-                    f"Open this link to choose a new password:\n{link}\n\n"
-                    "If you did not request this, you can ignore this email."
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-            )
+            try:
+                send_mail(
+                    subject="Reset your Remember US password",
+                    message=(
+                        "We received a request to reset your Remember US password.\n\n"
+                        f"Open this link to choose a new password:\n{link}\n\n"
+                        "If you did not request this, you can ignore this email."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                )
+            except Exception:  # noqa: BLE001 — mail failure must not change the response
+                # Same 200 as for unknown emails, otherwise the status reveals the account.
+                # Never log the link: it contains the reset token.
+                logger.exception("Password reset email could not be sent (user %s)", user.pk)
         return success(None)
 
     @action(detail=False, methods=["post"], url_path="password-reset/confirm")
