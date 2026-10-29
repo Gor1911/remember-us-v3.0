@@ -34,6 +34,9 @@ export interface Tokens {
 
 // ─── Memorial Page ─────────────────────────────────────────────────────────────
 
+export type PackageType = 'standard' | 'premium';
+export type PortraitStatus = 'none' | 'pending' | 'processing' | 'done' | 'failed';
+
 export type PageState = 'draft' | 'moderation' | 'active';
 export type PageType  = 'civilian' | 'military';
 
@@ -64,7 +67,7 @@ export interface MilitaryAward {
 
 export interface MediaFile {
   id: string;
-  media_type: 'portrait' | 'photo' | 'video' | 'document' | 'model_3d';
+  media_type: 'portrait' | 'photo' | 'video' | 'document' | 'model_3d' | 'living_portrait';
   file_url: string;
   original_filename: string;
   is_primary_portrait: boolean;
@@ -94,6 +97,13 @@ export interface MemorialPageListItem {
   /** Admin rejection note — present only if the API exposes it. */
   moderation_note?: string;
   created_at: string;
+  // Owner/admin only (absent for guests)
+  is_paid?: boolean;
+  package_type?: PackageType | '';
+  paid_at?: string | null;
+  portrait_animation_status?: PortraitStatus;
+  hidden?: boolean;
+  hidden_reason?: string;
 }
 
 export interface MemorialPageDetail extends MemorialPageListItem {
@@ -103,8 +113,9 @@ export interface MemorialPageDetail extends MemorialPageListItem {
   military_branch: string | null;
   service_start: string | null;
   service_end: string | null;
+  /** Signed URL of the living portrait video; non-null only when status is 'done'. */
   portrait_animated_url: string | null;
-  portrait_animation_status: 'pending' | 'processing' | 'done' | 'failed';
+  portrait_animation_status: PortraitStatus;
   approved_at: string | null;
   memorial_url: string;
   timeline_entries: TimelineEntry[];
@@ -137,3 +148,65 @@ export interface CreatePagePayload {
 }
 
 export type UpdatePagePayload = Partial<Omit<CreatePagePayload, 'page_type'>>;
+
+// ─── Access: shareable link + QR (two keys) ────────────────────────────────────
+
+export interface PageAccessQr {
+  exists: boolean;
+  is_active: boolean;
+  /** URL encoded in the QR image (`/q/<token>`). */
+  qr_target_url: string | null;
+  /** Signed PNG preview URL. */
+  image_url: string | null;
+  scan_count: number;
+  last_scanned_at: string | null;
+  /** A QR made before two-key access may encode the web link — resetting the link would break it. */
+  legacy_link_qr: boolean;
+}
+
+export interface PageAccess {
+  memorial_url: string;
+  qr: PageAccessQr;
+  /** Present after rotate-link. */
+  slug?: string;
+}
+
+// ─── Payments ──────────────────────────────────────────────────────────────────
+
+export interface Plan {
+  id: PackageType;
+  name: string;
+  amount_cents: number;
+  currency: string;
+  available: boolean;
+}
+
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired' | 'refunded';
+
+export interface PaymentSessionStatus {
+  status: PaymentStatus;
+  package: PackageType;
+  page: { slug: string; state: PageState; first_name: string; last_name: string };
+}
+
+// ─── Reports (complaints) ──────────────────────────────────────────────────────
+
+export type ReportCategory = 'inappropriate' | 'privacy' | 'copyright' | 'impersonation' | 'other';
+export type ReportStatus = 'open' | 'resolved' | 'dismissed';
+
+export interface ReportPayload {
+  category: ReportCategory;
+  message: string;
+  contact_email?: string;
+}
+
+export interface Report {
+  id: string;
+  category: ReportCategory;
+  message: string;
+  contact_email: string;
+  status: ReportStatus;
+  created_at: string;
+  resolution_note: string;
+  page: { slug: string; first_name: string; last_name: string; state: PageState; hidden: boolean };
+}

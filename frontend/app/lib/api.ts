@@ -11,6 +11,14 @@ import type {
   UpdatePagePayload,
   MediaFile,
   QrCode,
+  PageAccess,
+  Plan,
+  PackageType,
+  PaymentSessionStatus,
+  PortraitStatus,
+  Report,
+  ReportPayload,
+  ReportStatus,
 } from './types';
 
 const BASE = API_BASE;
@@ -269,4 +277,59 @@ export const media = {
 export const qr = {
   generate: (pageSlug: string) =>
     request<QrCode>(`/pages/${pageSlug}/qr/generate/`, { method: 'POST' }),
+};
+
+// ─── Access: shareable link + QR (two keys) ────────────────────────────────────
+
+export const access = {
+  get: (slug: string) => request<PageAccess>(`/pages/${slug}/access/`),
+  /** Issues a new web link; the old one stops working. The engraved QR keeps working. */
+  rotateLink: (slug: string) => request<PageAccess>(`/pages/${slug}/rotate-link/`, { method: 'POST' }),
+  generateQr: (slug: string) => request<PageAccess>(`/pages/${slug}/qr/generate/`, { method: 'POST' }),
+  disableQr: (slug: string) => request<PageAccess>(`/pages/${slug}/qr/disable/`, { method: 'POST' }),
+  enableQr: (slug: string) => request<PageAccess>(`/pages/${slug}/qr/enable/`, { method: 'POST' }),
+  /** New QR token — printed/engraved codes stop working. */
+  rotateQr: (slug: string) => request<PageAccess>(`/pages/${slug}/qr/rotate/`, { method: 'POST' }),
+  downloadQr: (slug: string, format: 'png' | 'svg') => download(`/pages/${slug}/qr/download/?format=${format}`),
+  /** Public: resolve an engraved QR token to the current page slug. */
+  resolveQr: (token: string) => request<{ slug: string }>(`/qr/${encodeURIComponent(token)}/`),
+};
+
+// ─── Payments ──────────────────────────────────────────────────────────────────
+
+export const payments = {
+  plans: () => request<Plan[]>('/payments/plans/'),
+  checkout: (slug: string, pkg: PackageType, consentAi = false) =>
+    request<{ checkout_url: string }>(`/pages/${slug}/checkout/`, {
+      method: 'POST',
+      body: JSON.stringify({ package: pkg, consent_ai: consentAi }),
+    }),
+  session: (sessionId: string) =>
+    request<PaymentSessionStatus>(`/payments/session/${encodeURIComponent(sessionId)}/`),
+};
+
+// ─── Living Portrait (manual, admin) ──────────────────────────────────────────
+
+export const livingPortrait = {
+  upload: (slug: string, form: FormData) => upload<MemorialPageDetail>(`/pages/${slug}/living-portrait/`, form),
+  remove: (slug: string) => request<MemorialPageDetail>(`/pages/${slug}/living-portrait/`, { method: 'DELETE' }),
+  setStatus: (slug: string, status: Exclude<PortraitStatus, 'none' | 'done'>) =>
+    request<MemorialPageDetail>(`/pages/${slug}/living-portrait/status/`, {
+      method: 'POST',
+      body: JSON.stringify({ status }),
+    }),
+};
+
+// ─── Reports (complaints) & takedown ──────────────────────────────────────────
+
+export const reports = {
+  /** Public: report a memorial. */
+  create: (slug: string, payload: ReportPayload) =>
+    request<{ id: string }>(`/pages/${slug}/reports/`, { method: 'POST', body: JSON.stringify(payload) }),
+  list: (status: ReportStatus | 'all' = 'open') => request<Report[]>(`/reports/?status=${status}`),
+  resolve: (id: string, action: 'dismiss' | 'resolve' | 'hide_page', note = '') =>
+    request<Report>(`/reports/${id}/resolve/`, { method: 'POST', body: JSON.stringify({ action, note }) }),
+  hidePage: (slug: string, reason: string) =>
+    request<{ hidden: boolean }>(`/pages/${slug}/hide/`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  unhidePage: (slug: string) => request<{ hidden: boolean }>(`/pages/${slug}/unhide/`, { method: 'POST' }),
 };
