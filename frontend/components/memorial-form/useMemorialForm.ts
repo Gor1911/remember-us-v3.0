@@ -11,7 +11,7 @@ export interface CreatedResult {
 }
 
 /** Form state, photo handling and the create -> upload -> submit flow. */
-export function useMemorialForm() {
+export function useMemorialForm(isAdmin: boolean) {
   const [step, setStep]                 = useState<Step>(0);
   const [form, setForm]                 = useState<FormState>(EMPTY_FORM);
   const [photos, setPhotos]             = useState<PhotoEntry[]>([]);
@@ -19,6 +19,9 @@ export function useMemorialForm() {
   const [uploadStatus, setUploadStatus] = useState('');
   const [apiError, setApiError]         = useState('');
   const [created, setCreated]           = useState<CreatedResult | null>(null);
+  /** Slug of the draft once it exists (non-admins then pick a plan). */
+  const [draftSlug, setDraftSlug]       = useState<string | null>(null);
+  const [draftWarning, setDraftWarning] = useState('');
 
   const photosRef = useRef(photos);
   useEffect(() => { photosRef.current = photos; }, [photos]);
@@ -54,6 +57,7 @@ export function useMemorialForm() {
     : true;
 
   const create = useCallback(async () => {
+    if (submitting || draftSlug) return;
     setSubmitting(true);
     setApiError('');
     setUploadStatus('');
@@ -91,20 +95,31 @@ export function useMemorialForm() {
       if (!up.success) failedUploads += 1;
     }
 
+    const uploadWarning = failedUploads > 0
+      ? `${failedUploads} photo${failedUploads > 1 ? 's' : ''} failed to upload. You can add them later by editing the memorial.`
+      : '';
+
+    if (!isAdmin) {
+      // Drafts are free; paying (next step) submits for review.
+      setUploadStatus('');
+      setSubmitting(false);
+      setDraftSlug(slug);
+      setDraftWarning(uploadWarning);
+      setStep(4);
+      return;
+    }
+
     setUploadStatus('Submitting for review…');
     const sub = await pages.submit(slug);
-
-    const warnings: string[] = [];
-    if (failedUploads > 0) warnings.push(`${failedUploads} photo${failedUploads > 1 ? 's' : ''} failed to upload.`);
+    const warnings = [uploadWarning];
     if (!sub.success) warnings.push(sub.error);
-
     setUploadStatus('');
     setSubmitting(false);
-    setCreated({ submitted: sub.success, warning: warnings.join(' ') });
-  }, [form, photos]);
+    setCreated({ submitted: sub.success, warning: warnings.filter(Boolean).join(' ') });
+  }, [form, photos, isAdmin, submitting, draftSlug]);
 
   return {
     step, setStep, form, set, photos, addPhotos, removePhoto,
-    canNext, submitting, uploadStatus, apiError, created, create,
+    canNext, submitting, uploadStatus, apiError, created, create, draftSlug, draftWarning,
   };
 }

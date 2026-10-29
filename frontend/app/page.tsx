@@ -10,6 +10,7 @@ import { QrSection } from '@/components/landing/QrSection';
 import { HowItWorksSection } from '@/components/landing/HowItWorksSection';
 import { FaqSection } from '@/components/landing/FaqSection';
 import { AccountDeletedNotice } from '@/components/landing/AccountDeletedNotice';
+import { PricingSection } from '@/components/pricing/PricingSection';
 import { CtaBanner } from '@/components/landing/CtaBanner';
 
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default function LandingPage() {
         <LivingPortraitSection />
         <FeaturesSection />
         <HowItWorksSection />
+        <PricingSection />
         <QrSection />
         <FaqSection />
         <CtaBanner />

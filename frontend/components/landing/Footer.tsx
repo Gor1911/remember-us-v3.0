@@ -7,6 +7,7 @@ const NAV_COLUMNS = [
       { label: 'How It Works', href: '/#how-it-works' },
       { label: 'Features',     href: '/#features' },
       { label: 'QR Access',    href: '/#qr-access' },
+      { label: 'Pricing',      href: '/#pricing' },
       { label: 'FAQ',          href: '/#faq' },
     ],
   },

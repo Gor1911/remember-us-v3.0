@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import type { MemorialPageDetail } from '@/app/lib/types';
-import { API_BASE } from '@/app/lib/config';
+import { pages } from '@/app/lib/api';
 import { useAuthContext } from '@/app/context/AuthContext';
 import { MemorialHero } from '@/components/memorial/MemorialHero';
 import { MemorialBio } from '@/components/memorial/MemorialBio';
 import { MemorialGallery } from '@/components/memorial/MemorialGallery';
 import { MemorialAwards, MemorialQr } from '@/components/memorial/MemorialAwards';
+import { ReportButton } from '@/components/memorial/ReportButton';
 import { StateBadge } from '@/components/memorial/StateBadge';
 import {
   ModerationScreen,
@@ -24,24 +25,12 @@ type FetchState =
   | { status: 'not_found' };
 
 async function fetchMemorial(slug: string): Promise<FetchState> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  try {
-    const res = await fetch(`${API_BASE}/pages/${slug}/`, { headers });
-    if (!res.ok) return { status: 'not_found' };
-    const json = await res.json() as { success: boolean; data?: MemorialPageDetail };
-    if (!json.success || !json.data) return { status: 'not_found' };
-
-    const { state } = json.data;
-    if (state === 'draft' || state === 'moderation') {
-      return { status: 'moderation', state };
-    }
-    return { status: 'found', data: json.data };
-  } catch {
-    return { status: 'not_found' };
-  }
+  const res = await pages.get(slug);
+  // Hidden, deleted and unknown pages all come back as 404 — show the generic not-found screen.
+  if (!res.success) return { status: 'not_found' };
+  const { state } = res.data;
+  if (state === 'draft' || state === 'moderation') return { status: 'moderation', state };
+  return { status: 'found', data: res.data };
 }
 
 export default function MemorialPage() {
@@ -91,7 +80,10 @@ export default function MemorialPage() {
               Remember <span className="text-muted">US</span>
             </span>
           </Link>
-          <p className="text-muted text-xs">Designed for Eternity. Built in USA.</p>
+          <div className="flex items-center gap-4 flex-wrap">
+            <ReportButton slug={memorial.slug} />
+            <p className="text-muted text-xs">Designed for Eternity. Built in USA.</p>
+          </div>
         </div>
       </footer>
 

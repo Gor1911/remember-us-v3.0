@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useAuth } from '@/app/hooks/useAuth';
@@ -11,12 +11,20 @@ import { ModerationQueue } from '@/components/dashboard/ModerationQueue';
 import { MemorialGroups } from '@/components/dashboard/MemorialGroups';
 import { AccountSection } from '@/components/dashboard/AccountSection';
 import { EmptyState } from '@/components/dashboard/EmptyState';
+import { ReportsQueue } from '@/components/dashboard/ReportsQueue';
+import { CheckoutCanceledNotice } from '@/components/dashboard/CheckoutCanceledNotice';
+import { PlanSelectDialog } from '@/components/payments/PlanSelectDialog';
+import { AccessDialog } from '@/components/access/AccessDialog';
+import type { MemorialPageListItem } from '@/app/lib/types';
 
 export default function DashboardPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const listRef = useRef<HTMLDivElement>(null);
   const isAdmin = user?.role === 'admin';
+
+  const [planPage, setPlanPage] = useState<MemorialPageListItem | null>(null);
+  const [accessSlug, setAccessSlug] = useState<string | null>(null);
 
   const data = useDashboardData(isAuthenticated, isAdmin);
   const { memorials, queue, fetching, error, actionError, busySlug } = data;
@@ -56,11 +64,15 @@ export default function DashboardPage() {
           inReview={memorials.filter((m) => m.state === 'moderation').length}
         />
 
+        <CheckoutCanceledNotice />
+
         {(error || actionError) && (
           <p role="alert" className="text-[#8B0000] text-sm bg-[#8B0000]/[0.06] border border-[#8B0000]/15 rounded-[12px] px-4 py-3 mb-8">
             {actionError || error}
           </p>
         )}
+
+        {isAdmin && !fetching && <ReportsQueue onPageChanged={data.refresh} />}
 
         {isAdmin && !fetching && (
           <ModerationQueue
@@ -89,15 +101,30 @@ export default function DashboardPage() {
             <MemorialGroups
               memorials={memorials}
               currentUserId={user?.id}
-              showOwner={isAdmin}
+              isAdmin={isAdmin}
               busySlug={busySlug}
               onSubmit={data.submit}
+              onChoosePlan={setPlanPage}
+              onAccess={setAccessSlug}
+              onChanged={data.refresh}
             />
           </div>
         )}
 
         {user && <AccountSection email={user.email} />}
       </div>
+
+      {planPage && (
+        <PlanSelectDialog
+          slug={planPage.slug}
+          name={`${planPage.first_name} ${planPage.last_name}`}
+          onClose={() => setPlanPage(null)}
+          onAlreadyPaid={data.refresh}
+        />
+      )}
+      {accessSlug && (
+        <AccessDialog slug={accessSlug} onClose={() => setAccessSlug(null)} onSlugChanged={data.refresh} />
+      )}
     </div>
   );
 }

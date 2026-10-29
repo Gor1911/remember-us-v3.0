@@ -21,7 +21,7 @@ if (publicHost) {
 
 // Routes that are NOT memorial slugs (single-segment top-level paths).
 const NON_MEMORIAL =
-  'example|terms|privacy|dashboard|memorial|forgot-password|reset-password|_next|images|api|media|favicon.ico|robots.txt|sitemap.xml';
+  'example|terms|privacy|dashboard|memorial|forgot-password|reset-password|q|success|_next|images|api|media|favicon.ico|robots.txt|sitemap.xml';
 
 const SECURITY_HEADERS = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -45,6 +45,21 @@ const nextConfig: NextConfig = {
       {
         source: `/:slug((?!(?:${NON_MEMORIAL})$)[^/]+)`,
         headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+      // QR tokens and payment session ids are secrets.
+      {
+        source: "/q/:path*",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+      {
+        source: "/success",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
       },
       {
         source: "/:page(forgot-password|reset-password)",

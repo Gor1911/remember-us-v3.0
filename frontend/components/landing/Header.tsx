@@ -8,6 +8,7 @@ import { useAuth } from '@/app/hooks/useAuth';
 const NAV_LINKS: { label: string; href: string }[] = [
   { label: 'How It Works', href: '/#how-it-works' },
   { label: 'Features',     href: '/#features' },
+  { label: 'Pricing',      href: '/#pricing' },
   { label: 'FAQ',          href: '/#faq' },
   { label: 'Example',      href: '/example' },
 ];

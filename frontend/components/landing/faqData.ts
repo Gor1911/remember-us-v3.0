@@ -10,11 +10,11 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     q: 'How much does it cost?',
-    a: 'A single one-time payment: Standard is $99, Premium is $149 and adds the Living Portrait. No subscriptions and no hidden fees.',
+    a: 'Standard is $99 and Premium is $149, each a single one-time payment. Premium adds a Living Portrait prepared by our team. No subscriptions and no hidden fees. Drafts are free until you submit.',
   },
   {
     q: 'How long will the memorial stay online?',
-    a: 'One payment covers lifetime access. There is nothing to renew.',
+    a: 'Your one-time payment has no renewals. Your memorial stays online for as long as Remember US operates, and you can download a full archive of it at any time.',
   },
   {
     q: 'How do I put the QR code on a headstone?',

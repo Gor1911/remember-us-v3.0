@@ -9,19 +9,23 @@ gsap.registerPlugin(ScrollTrigger);
 const STEPS = [
   {
     title: 'Tell their story',
-    desc: 'Create an account and enter their name, dates, biography and the events of a life.',
+    desc: 'Start a free draft with their name, dates, biography and the events of a life.',
   },
   {
     title: 'Add photographs',
     desc: 'Upload portraits and family photos to bring the memorial to life.',
   },
   {
+    title: 'Choose a plan and submit',
+    desc: 'A one-time payment sends your memorial to our team for review.',
+  },
+  {
     title: 'We review every memorial',
-    desc: 'Our team checks each page before it goes live, usually within 24 hours.',
+    desc: 'Our team checks each page before it goes live, usually within 24 hours of submission.',
   },
   {
     title: 'Receive your private link and QR code',
-    desc: 'Engrave it on a plaque or headstone, or print it for a frame at home.',
+    desc: 'Engrave it on a plaque or headstone. Premium: your Living Portrait is ready within 24 hours of approval, once a clear portrait photo is provided.',
   },
 ];
 
@@ -50,15 +54,15 @@ export function HowItWorksSection() {
             <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">How it works</span>
           </div>
           <h2 className="text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
-            Four quiet steps.
+            Five quiet steps.
             <br />
             <span className="text-[#8A7F74]">Nothing left to chance.</span>
           </h2>
         </div>
 
-        <ol className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 list-none">
+        <ol className="grid grid-cols-1 md:grid-cols-6 gap-4 list-none">
           {STEPS.map(({ title, desc }, i) => (
-            <li key={title} className="how-step glass bento-pad flex flex-col gap-4 rounded-[32px]">
+            <li key={title} className={`how-step glass bento-pad flex flex-col gap-4 rounded-[32px] md:col-span-2 ${i === 3 ? 'md:col-start-2' : ''}`}>
               <span className="text-[#8B0000] font-semibold text-sm tracking-[0.12em] tabular-nums">
                 {String(i + 1).padStart(2, '0')}
               </span>

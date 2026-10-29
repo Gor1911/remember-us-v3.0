@@ -58,7 +58,7 @@ export function ExampleGalleryCta() {
             <span className="text-muted text-[11px] uppercase tracking-[0.14em] font-medium">Create Your Memorial</span>
           </div>
           <h2 className="text-[#1A1614] font-bold text-2xl xl:text-3xl tracking-tight max-w-lg">
-            Honor your loved one with a memorial that lasts forever.
+            Honor your loved one with a memorial your family can return to for generations.
           </h2>
           <Link
             href="/"

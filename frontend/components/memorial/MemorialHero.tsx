@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { MemorialPageDetail } from '@/app/lib/types';
+import { LivingPortraitPlayer } from '@/components/memorial/LivingPortraitPlayer';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -92,7 +93,15 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
         {/* Portrait — overflows below hero */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[35%] z-10">
           <div className="portrait-card opacity-0 relative w-72 h-[440px] md:h-[460px] rounded-[28px] overflow-hidden border border-[#1A1614]/10 shadow-[0_0_0_8px_rgba(139,0,0,0.08),0_40px_80px_rgba(26,22,20,0.15)]">
-            {portrait ? (
+            {memorial.portrait_animated_url ? (
+              <LivingPortraitPlayer
+                src={memorial.portrait_animated_url}
+                poster={portrait?.file_url ?? null}
+                label={`Living portrait of ${memorial.full_name}`}
+                badge="AI Living Portrait"
+                unoptimized
+              />
+            ) : portrait ? (
               <Image
                 src={portrait.file_url}
                 alt={portrait.alt_text || memorial.full_name}

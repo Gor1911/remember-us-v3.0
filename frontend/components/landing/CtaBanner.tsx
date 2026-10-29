@@ -36,11 +36,11 @@ export function CtaBanner() {
           <h2 className="text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight max-w-2xl">
             Create a memorial
             <br />
-            <span className="text-[#8A7F74]">that lasts forever.</span>
+            <span className="text-[#8A7F74]">for generations to return to.</span>
           </h2>
           <p className="text-muted text-base leading-relaxed max-w-lg">
-            A premium memorial ready in 24 hours. You provide the photos and documents —
-            we take care of everything else.
+            Start a free draft today. Our team reviews every memorial, usually within
+            24 hours of submission, and takes care of the rest.
           </p>
           <div className="flex items-center gap-4 flex-wrap justify-center">
             <button

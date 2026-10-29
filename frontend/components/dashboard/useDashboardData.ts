@@ -40,7 +40,7 @@ export function useDashboardData(enabled: boolean, isAdmin: boolean) {
   }, [load]);
 
   return {
-    memorials, queue, fetching, error, actionError, busySlug,
+    memorials, queue, fetching, error, actionError, busySlug, refresh: load,
     submit:  (slug: string) => run(slug, () => pages.submit(slug)),
     approve: (slug: string) => run(slug, () => pages.approve(slug)),
     reject:  (slug: string, note: string) => run(slug, () => pages.reject(slug, note || undefined)),

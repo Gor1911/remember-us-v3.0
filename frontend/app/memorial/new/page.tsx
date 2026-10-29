@@ -8,6 +8,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from '@/components/dashboard/Icons';
 import { BasicInfoStep } from '@/components/memorial-form/BasicInfoStep';
 import { Field, Textarea } from '@/components/memorial-form/FormFields';
 import { PhotoStep } from '@/components/memorial-form/PhotoStep';
+import { PlanStep } from '@/components/memorial-form/PlanStep';
 import { ReviewStep } from '@/components/memorial-form/ReviewStep';
 import { StepProgress } from '@/components/memorial-form/StepProgress';
 import { SuccessScreen } from '@/components/memorial-form/SuccessScreen';
@@ -18,9 +19,10 @@ const PRIMARY =
   'inline-flex items-center gap-2 whitespace-nowrap px-8 py-3 bg-[#8B0000] hover:bg-[#A00000] text-white text-sm font-medium rounded-[14px] transition-colors disabled:bg-[#1A1614]/10 disabled:text-[#8A7F74] disabled:cursor-not-allowed';
 
 export default function NewMemorialPage() {
-  const { isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const f = useMemorialForm();
+  const isAdmin = user?.role === 'admin';
+  const f = useMemorialForm(isAdmin);
   const { step, setStep, form, photos } = f;
 
   useEffect(() => {
@@ -101,6 +103,9 @@ export default function NewMemorialPage() {
           <ReviewStep form={form} photos={photos} apiError={f.apiError} uploadStatus={f.uploadStatus} />
         )}
 
+        {step === 4 && f.draftSlug && <PlanStep slug={f.draftSlug} warning={f.draftWarning} />}
+
+        {step < 4 && (
         <div className="flex justify-between mt-6 gap-3">
           <button
             type="button"
@@ -128,11 +133,12 @@ export default function NewMemorialPage() {
                   {f.uploadStatus || 'Creating…'}
                 </>
               ) : (
-                <>Submit for review <ArrowRightIcon /></>
+                <>{isAdmin ? 'Submit for review' : 'Create draft and choose plan'} <ArrowRightIcon /></>
               )}
             </button>
           )}
         </div>
+        )}
       </div>
     </div>
   );
