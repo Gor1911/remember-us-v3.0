@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from django.contrib import admin
 
+from apps.audit.utils import log_action
 from apps.media.models import MediaFile
 
 from .models import MemorialPage, MilitaryAward, TimelineEntry
@@ -42,4 +43,5 @@ class MemorialPageAdmin(admin.ModelAdmin):
         """Bulk approve pages from admin panel."""
         for page in queryset.filter(state="moderation"):
             page.approve(request.user)
+            log_action(request.user, "page.approve", page, via="django-admin")
         self.message_user(request, "Selected pages approved.")

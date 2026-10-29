@@ -113,7 +113,7 @@ def test_direct_media_path_not_served(api_client, owner, active_page):
 
 def test_qr_url_signed(api_client, owner, active_page):
     resp = auth(api_client, owner).post(f"/api/v1/pages/{active_page.slug}/qr/generate/")
-    url = resp.json()["data"]["qr_url"]
+    url = resp.json()["data"]["qr"]["image_url"]
     assert "/media/s/" in url
     r = Client().get(path_of(url))
     assert r.status_code == 200

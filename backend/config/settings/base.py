@@ -39,6 +39,9 @@ LOCAL_APPS = [
     "apps.pages",
     "apps.media",
     "apps.qr",
+    "apps.audit",
+    "apps.payments",
+    "apps.reports",
     "apps.api",
 ]
 
@@ -141,7 +144,10 @@ REST_FRAMEWORK = {
         "user": "1000/min",
         "scan": "30/min",
         "auth": "10/min",
+        "report": "5/hour",
     },
+    # `?format=` is used by the QR download endpoint (png|svg), not for renderer selection.
+    "URL_FORMAT_OVERRIDE": None,
     # 1 proxy (nginx) when X-Forwarded-For is trusted, otherwise use REMOTE_ADDR.
     "NUM_PROXIES": 1 if TRUST_X_FORWARDED_FOR else 0,
 }
@@ -149,6 +155,7 @@ REST_FRAMEWORK = {
 # --- Media upload limits ---
 MAX_IMAGE_UPLOAD_BYTES = 15 * 1024 * 1024
 MAX_VIDEO_UPLOAD_BYTES = 200 * 1024 * 1024
+MAX_LIVING_PORTRAIT_BYTES = 100 * 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # non-file request bodies
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # larger files spool to disk
 
@@ -218,6 +225,12 @@ PASSWORD_RESET_TIMEOUT = 60 * 60 * 3  # seconds
 # --- External APIs ---
 LIVEPORTRAIT_API_KEY = env("LIVEPORTRAIT_API_KEY", default="")
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+
+# --- Stripe (Checkout, one-time payments). Leave empty to disable payments. ---
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
+STRIPE_PRICE_STANDARD = env("STRIPE_PRICE_STANDARD", default="")
+STRIPE_PRICE_PREMIUM = env("STRIPE_PRICE_PREMIUM", default="")
 
 # --- Security headers on memorial pages ---
 MEMORIAL_NOINDEX = True

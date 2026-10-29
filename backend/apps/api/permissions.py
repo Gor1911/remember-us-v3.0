@@ -67,8 +67,6 @@ class CanAccessMemorialPage(BasePermission):
     message = "This memorial page is not publicly available."
 
     def has_object_permission(self, request: Request, view: View, obj) -> bool:
-        from apps.pages.models import PageState
-
         # Admins see everything
         if request.user.is_authenticated and request.user.role == UserRole.ADMIN:
             return True
@@ -77,5 +75,5 @@ class CanAccessMemorialPage(BasePermission):
         if request.user.is_authenticated and obj.owner == request.user:
             return True
 
-        # Everyone else (including unauthenticated guests) sees only ACTIVE pages
-        return obj.state == PageState.ACTIVE
+        # Everyone else (including unauthenticated guests) sees only ACTIVE, non-hidden pages
+        return obj.is_publicly_visible

@@ -10,6 +10,9 @@ django-environ==0.11.2
 # Auth
 djangorestframework-simplejwt==5.3.1
 
+# Payments
+stripe==16.0.1
+
 # Async tasks
 celery==5.3.6
 redis==5.0.3

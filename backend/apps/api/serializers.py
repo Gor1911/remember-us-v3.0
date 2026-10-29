@@ -7,7 +7,7 @@ from rest_framework import serializers
 from apps.media.models import MediaFile, MediaType
 from apps.media.signing import signed_file_url
 from apps.media.validators import detect_media_kind
-from apps.pages.models import MemorialPage, MilitaryAward, TimelineEntry
+from apps.pages.models import AnimationStatus, MemorialPage, MilitaryAward, TimelineEntry
 from apps.qr.models import QRCode
 from apps.users.models import User
 
@@ -181,6 +181,7 @@ class MemorialPageListSerializer(serializers.ModelSerializer):
 
     owner = UserOwnerSerializer(read_only=True)
     primary_portrait = serializers.SerializerMethodField()
+    hidden = serializers.SerializerMethodField()
 
     class Meta:
         model = MemorialPage
@@ -188,8 +189,14 @@ class MemorialPageListSerializer(serializers.ModelSerializer):
             "id", "slug", "page_type", "state",
             "first_name", "last_name", "birth_date", "death_date",
             "owner", "primary_portrait", "moderation_note", "created_at",
+            "is_paid", "package_type", "paid_at", "portrait_animation_status",
+            "hidden", "hidden_reason",
         ]
-        read_only_fields = ["id", "slug", "state", "moderation_note", "created_at"]
+        read_only_fields = fields
+
+    def get_hidden(self, obj: MemorialPage) -> bool:
+        """True when an admin took the page down."""
+        return obj.is_hidden
 
     def get_primary_portrait(self, obj: MemorialPage) -> str | None:
         prefetched = getattr(obj, "primary_portrait_files", None)
@@ -214,6 +221,8 @@ class MemorialPageDetailSerializer(serializers.ModelSerializer):
     qr_code = QRCodeSerializer(read_only=True)
     memorial_url = serializers.ReadOnlyField()
     full_name = serializers.ReadOnlyField()
+    portrait_animated_url = serializers.SerializerMethodField()
+    hidden = serializers.SerializerMethodField()
 
     class Meta:
         model = MemorialPage
@@ -225,12 +234,48 @@ class MemorialPageDetailSerializer(serializers.ModelSerializer):
             "portrait_animated_url", "portrait_animation_status",
             "owner", "approved_at", "memorial_url",
             "timeline_entries", "military_awards", "media_files", "qr_code",
+            "is_paid", "package_type", "paid_at", "hidden", "hidden_reason",
             "created_at", "updated_at",
         ]
-        read_only_fields = [
-            "id", "slug", "state", "portrait_animated_url",
-            "portrait_animation_status", "approved_at", "created_at", "updated_at",
+        read_only_fields = fields
+
+    # Visible only to the page owner and admins.
+    PRIVATE_FIELDS = (
+        "is_paid", "package_type", "paid_at", "hidden", "hidden_reason", "qr_code",
+    )
+
+    def get_hidden(self, obj: MemorialPage) -> bool:
+        """True when an admin took the page down."""
+        return obj.is_hidden
+
+    def get_portrait_animated_url(self, obj: MemorialPage) -> str | None:
+        """Signed URL of the admin-uploaded living portrait; only when status is `done`."""
+        if obj.portrait_animation_status != AnimationStatus.DONE:
+            return None
+        video = (
+            obj.media_files.filter(media_type=MediaType.LIVING_PORTRAIT)
+            .order_by("-created_at")
+            .first()
+        )
+        if video is None:
+            return None
+        return signed_file_url(self.context.get("request"), video, "media")
+
+    def to_representation(self, instance: MemorialPage) -> dict:
+        """Strip owner/admin-only fields for everyone else; keep the gallery video-free."""
+        data = super().to_representation(instance)
+        data["media_files"] = [
+            m for m in data["media_files"] if m["media_type"] != MediaType.LIVING_PORTRAIT
         ]
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        privileged = bool(
+            user and user.is_authenticated and (user.is_admin or instance.owner_id == user.id)
+        )
+        if not privileged:
+            for field in self.PRIVATE_FIELDS:
+                data.pop(field, None)
+        return data
 
 
 class MemorialPageCreateSerializer(serializers.ModelSerializer):
@@ -266,3 +311,34 @@ class MemorialPageUpdateSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+
+class HideSerializer(serializers.Serializer):
+    """Reason for a takedown."""
+
+    reason = serializers.CharField(max_length=1000)
+
+
+class LivingPortraitUploadSerializer(serializers.Serializer):
+    """Admin upload of the finished Living Portrait video (mp4/webm, up to 100 MB)."""
+
+    file = serializers.FileField()
+
+    def validate_file(self, value):
+        """Require a real mp4/webm and enforce the size limit."""
+        detected = detect_media_kind(value)
+        if detected is None or detected[0] != "video":
+            raise serializers.ValidationError("Unsupported file. Allowed: MP4 or WebM video.")
+        limit = settings.MAX_LIVING_PORTRAIT_BYTES
+        if value.size > limit:
+            raise serializers.ValidationError(
+                f"File too large. Maximum is {limit // (1024 * 1024)} MB."
+            )
+        self.mime = detected[1]
+        return value
+
+
+class LivingPortraitStatusSerializer(serializers.Serializer):
+    """Manual status updates (not `done`: that is set by uploading the video)."""
+
+    status = serializers.ChoiceField(choices=["processing", "failed", "pending"])

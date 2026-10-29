@@ -16,6 +16,24 @@ class PageState(models.TextChoices):
     ACTIVE = "active", "Active"
 
 
+class PackageType(models.TextChoices):
+    """Paid package a page was purchased with."""
+
+    NONE = "", "None"
+    STANDARD = "standard", "Standard"
+    PREMIUM = "premium", "Premium"
+
+
+class AnimationStatus(models.TextChoices):
+    """Living Portrait production status (manual workflow)."""
+
+    NONE = "none", "Not applicable"
+    PENDING = "pending", "Pending"
+    PROCESSING = "processing", "Processing"
+    DONE = "done", "Done"
+    FAILED = "failed", "Failed"
+
+
 class PageType(models.TextChoices):
     """Page template type — affects design palette."""
 
@@ -66,14 +84,20 @@ class MemorialPage(BaseModel):
     portrait_animated_url = models.URLField(blank=True)
     portrait_animation_status = models.CharField(
         max_length=20,
-        default="pending",
-        choices=[
-            ("pending", "Pending"),
-            ("processing", "Processing"),
-            ("done", "Done"),
-            ("failed", "Failed"),
-        ],
+        default=AnimationStatus.NONE,
+        choices=AnimationStatus.choices,
     )
+
+    # Payment (one-time, before moderation)
+    is_paid = models.BooleanField(default=False, db_index=True)
+    package_type = models.CharField(
+        max_length=20, choices=PackageType.choices, blank=True, default=PackageType.NONE
+    )
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    # Takedown (admin)
+    hidden_at = models.DateTimeField(null=True, blank=True)
+    hidden_reason = models.TextField(blank=True)
 
     # Moderation
     moderation_note = models.TextField(blank=True)
@@ -172,7 +196,31 @@ class MemorialPage(BaseModel):
             self.state = PageState.MODERATION
             self.save(update_fields=["state", "updated_at"])
 
+    def hide(self, reason: str) -> None:
+        """Take the page down (admin takedown). Hidden pages 404 for everyone but owner/admin."""
+        from django.utils import timezone
+
+        self.hidden_at = timezone.now()
+        self.hidden_reason = reason
+        self.save(update_fields=["hidden_at", "hidden_reason", "updated_at"])
+
+    def unhide(self) -> None:
+        """Lift a takedown."""
+        self.hidden_at = None
+        self.hidden_reason = ""
+        self.save(update_fields=["hidden_at", "hidden_reason", "updated_at"])
+
     # --- Helpers ---
+
+    @property
+    def is_hidden(self) -> bool:
+        """True when an admin has taken the page down."""
+        return self.hidden_at is not None
+
+    @property
+    def is_publicly_visible(self) -> bool:
+        """ACTIVE, not hidden, not deleted: the only state guests may see."""
+        return self.state == PageState.ACTIVE and not self.is_hidden and not self.is_deleted
 
     @property
     def is_active(self) -> bool:

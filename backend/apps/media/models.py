@@ -19,6 +19,7 @@ class MediaType(models.TextChoices):
     VIDEO = "video", "Video"
     DOCUMENT = "document", "Document"
     MODEL_3D = "model_3d", "3D Model"
+    LIVING_PORTRAIT = "living_portrait", "Living Portrait Video"
 
 
 _EXT_RE = re.compile(r"^\.[a-z0-9]{1,5}$")

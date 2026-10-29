@@ -348,6 +348,8 @@ def test_create_then_submit_flow(api_client, owner):
     created = api_client.post("/api/v1/pages/", {"first_name": "N", "last_name": "P"})
     assert created.data["data"]["state"] == "draft"
     slug = created.data["data"]["slug"]
+    assert api_client.post(f"/api/v1/pages/{slug}/submit/").status_code == 402
+    MemorialPage.objects.filter(slug=slug).update(is_paid=True)
     submitted = api_client.post(f"/api/v1/pages/{slug}/submit/")
     assert submitted.data["data"]["state"] == "moderation"
 

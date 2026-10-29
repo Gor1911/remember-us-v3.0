@@ -9,6 +9,31 @@ from rest_framework import exceptions, status
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
+
+class PaymentRequired(exceptions.APIException):
+    """402: the page must be paid before it can be submitted."""
+
+    status_code = 402
+    default_detail = "Payment is required before submitting for review."
+    default_code = "payment_required"
+
+
+class AlreadyPaid(exceptions.APIException):
+    """409: the page already has a paid package."""
+
+    status_code = 409
+    default_detail = "This page is already paid."
+    default_code = "already_paid"
+
+
+class PaymentsUnavailable(exceptions.APIException):
+    """503: Stripe is not configured or unreachable."""
+
+    status_code = 503
+    default_detail = "Payments are temporarily unavailable."
+    default_code = "payments_unavailable"
+
+
 _CODES: dict[type[Exception], str] = {
     exceptions.ValidationError: "VALIDATION_ERROR",
     exceptions.Throttled: "RATE_LIMITED",

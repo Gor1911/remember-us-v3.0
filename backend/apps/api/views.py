@@ -19,16 +19,18 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from apps.media.models import MediaFile
+from apps.audit.utils import log_action
+from apps.media.models import MediaFile, MediaType
 from apps.pages.models import MemorialPage, PageState
-from apps.qr.models import QRCode
+from apps.qr.models import QRCode, QRScanLog
 from apps.users.models import User
 
+from .exceptions import PaymentRequired
 from .export import build_export_zip
 from .permissions import (
     CanAccessMemorialPage,
@@ -41,7 +43,6 @@ from .serializers import (
     MemorialPageDetailSerializer,
     MemorialPageListSerializer,
     MemorialPageUpdateSerializer,
-    QRCodeSerializer,
     UserCreateSerializer,
     UserDetailSerializer,
 )
@@ -175,6 +176,7 @@ class AuthViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         user.delete_account()
+        log_action(user, "account.delete", user)
         return success(None)
 
 
@@ -260,6 +262,8 @@ class MemorialPageViewSet(viewsets.ViewSet):
     def submit(self, request: Request, slug: str | None = None) -> Response:
         """Submit page for moderation (DRAFT → MODERATION)."""
         page = get_object_or_404(MemorialPage, slug=slug, owner=request.user)
+        if page.state == PageState.DRAFT and not page.is_paid and not request.user.is_admin:
+            raise PaymentRequired()
         page.submit_for_moderation()
         return success({"state": page.state})
 
@@ -268,6 +272,7 @@ class MemorialPageViewSet(viewsets.ViewSet):
         """Approve page (MODERATION → ACTIVE). Admin only."""
         page = get_object_or_404(MemorialPage, slug=slug)
         page.approve(request.user)
+        log_action(request.user, "page.approve", page)
         return success({"state": page.state})
 
     @action(detail=True, methods=["post"], permission_classes=[IsAdmin])
@@ -276,11 +281,16 @@ class MemorialPageViewSet(viewsets.ViewSet):
         page = get_object_or_404(MemorialPage, slug=slug)
         note = request.data.get("note", "")
         page.reject(request.user, note=note)
+        log_action(request.user, "page.reject", page, has_note=bool(note))
         return success({"state": page.state, "moderation_note": page.moderation_note})
 
     @action(detail=False, methods=["get"], url_path="moderation", permission_classes=[IsAdmin])
     def list_moderation(self, request: Request) -> Response:
-        """List all pages pending moderation. Admin only."""
+        """List all pages pending moderation. Admin only.
+
+        Payment is enforced at submit; owner edits of pages approved before payments
+        existed also land here unpaid and must not be hidden from review.
+        """
         qs = _with_list_relations(MemorialPage.objects.filter(state=PageState.MODERATION))
         serializer = MemorialPageListSerializer(qs, many=True, context={"request": request})
         return success(serializer.data)
@@ -294,20 +304,12 @@ class MemorialPageViewSet(viewsets.ViewSet):
     def scan(self, request: Request, slug: str | None = None) -> Response:
         """Public QR scan endpoint — throttled with the `scan` scope."""
         page = get_object_or_404(MemorialPage, slug=slug, state=PageState.ACTIVE)
+        if page.is_hidden:
+            raise NotFound("Page not found.")
 
-        # Log the scan
-        try:
-            qr = page.qr_code
-            from apps.qr.models import QRScanLog
-            qr.record_scan()
-            QRScanLog.objects.create(
-                qr_code=qr,
-                ip_address=_get_client_ip(request),
-                user_agent=request.META.get("HTTP_USER_AGENT", "")[:500],
-                referrer=request.META.get("HTTP_REFERER", "")[:200],
-            )
-        except QRCode.DoesNotExist:
-            pass
+        qr = QRCode.objects.filter(page=page).first()
+        if qr is not None:
+            record_qr_scan(request, qr)
 
         return success({"slug": page.slug, "redirect": page.memorial_url})
 
@@ -321,6 +323,7 @@ class MemorialPageViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
         archive = build_export_zip(page)
+        log_action(request.user, "page.export", page)
         return FileResponse(
             archive,
             as_attachment=True,
@@ -362,7 +365,7 @@ class MediaFileViewSet(viewsets.ViewSet):
                 {"success": False, "error": "Not found.", "code": "NOT_FOUND"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        files = page.media_files.all()
+        files = page.media_files.exclude(media_type=MediaType.LIVING_PORTRAIT)
         return success(
             MediaFileSerializer(files, many=True, context={"request": request}).data
         )
@@ -401,47 +404,28 @@ class MediaFileViewSet(viewsets.ViewSet):
     def destroy(self, request: Request, page_slug: str | None = None, pk=None) -> Response:
         """Delete a media file."""
         page = self._get_page(page_slug, request)
-        media = get_object_or_404(MediaFile, id=pk, page=page)
+        media = get_object_or_404(
+            MediaFile.objects.exclude(media_type=MediaType.LIVING_PORTRAIT), id=pk, page=page
+        )
         media.soft_delete()
         _flag_owner_edit(request, page)
         return success(None, status_code=status.HTTP_204_NO_CONTENT)
 
 
 # ---------------------------------------------------------------------------
-# QR Code
-# ---------------------------------------------------------------------------
-
-
-class QRCodeViewSet(viewsets.ViewSet):
-    """Generate and retrieve QR codes."""
-
-    permission_classes = [IsAuthenticated]
-
-    @action(detail=False, methods=["post"], url_path="generate")
-    def generate(self, request: Request, page_slug: str | None = None) -> Response:
-        """Generate or regenerate QR code for a page."""
-        page = get_object_or_404(MemorialPage, slug=page_slug)
-        if not (request.user.is_admin or page.owner == request.user):
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied()
-
-        from django.core.files.base import ContentFile
-
-        from apps.qr.utils import generate_qr_image
-
-        qr, created = QRCode.objects.get_or_create(page=page)
-        png_bytes = generate_qr_image(page.memorial_url)
-        qr.image.save(f"{page.slug}.png", ContentFile(png_bytes), save=True)
-
-        return success(
-            QRCodeSerializer(qr, context={"request": request}).data,
-            status_code=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
-
-
-# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def record_qr_scan(request: Request, qr: QRCode) -> None:
+    """Count a scan and keep an anonymous-ish scan log entry."""
+    qr.record_scan()
+    QRScanLog.objects.create(
+        qr_code=qr,
+        ip_address=_get_client_ip(request),
+        user_agent=request.META.get("HTTP_USER_AGENT", "")[:500],
+        referrer=request.META.get("HTTP_REFERER", "")[:200],
+    )
 
 
 def _flag_owner_edit(request: Request, page: MemorialPage) -> None:

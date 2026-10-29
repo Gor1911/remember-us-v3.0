@@ -112,6 +112,8 @@ class TestMemorialPageCreate:
 
 class TestStateTransitionsAPI:
     def test_owner_submits_page(self, api_client, owner, draft_page):
+        draft_page.is_paid = True
+        draft_page.save()
         api_client.force_authenticate(user=owner)
         response = api_client.post(f"/api/v1/pages/{draft_page.slug}/submit/")
         assert response.status_code == 200
