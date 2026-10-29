@@ -1,6 +1,10 @@
 """Media upload models — portraits, videos, documents."""
 from __future__ import annotations
 
+import os
+import re
+import uuid
+
 from django.conf import settings
 from django.db import models
 
@@ -17,9 +21,17 @@ class MediaType(models.TextChoices):
     MODEL_3D = "model_3d", "3D Model"
 
 
+_EXT_RE = re.compile(r"^\.[a-z0-9]{1,5}$")
+
+
 def upload_to(instance: MediaFile, filename: str) -> str:
-    """Generate upload path: media/<page_slug>/<type>/<filename>."""
-    return f"media/{instance.page.slug}/{instance.media_type}/{filename}"
+    """Generate an unguessable path: media/<page uuid>/<uuid4 hex><ext>."""
+    ext = os.path.splitext(filename)[1].lower()
+    if ext == ".jpeg":
+        ext = ".jpg"
+    if not _EXT_RE.match(ext):
+        ext = ""
+    return f"media/{instance.page_id}/{uuid.uuid4().hex}{ext}"
 
 
 class MediaFile(BaseModel):

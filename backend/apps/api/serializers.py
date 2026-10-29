@@ -5,6 +5,7 @@ from django.conf import settings
 from rest_framework import serializers
 
 from apps.media.models import MediaFile, MediaType
+from apps.media.signing import signed_file_url
 from apps.media.validators import detect_media_kind
 from apps.pages.models import MemorialPage, MilitaryAward, TimelineEntry
 from apps.qr.models import QRCode
@@ -78,10 +79,21 @@ class MediaFileSerializer(serializers.ModelSerializer):
 
     def get_file_url(self, obj: MediaFile) -> str | None:
         """Return absolute URL for the file."""
+        return signed_file_url(self.context.get("request"), obj, "media")
+
+    def to_representation(self, instance: MediaFile) -> dict:
+        """Hide the original filename from everyone except the page owner and admins."""
+        data = super().to_representation(instance)
         request = self.context.get("request")
-        if obj.file and request:
-            return request.build_absolute_uri(obj.file.url)
-        return obj.file.url if obj.file else None
+        user = getattr(request, "user", None)
+        allowed = bool(
+            user
+            and user.is_authenticated
+            and (user.is_admin or instance.page.owner_id == user.id)
+        )
+        if not allowed:
+            data.pop("original_filename", None)
+        return data
 
 
 class MediaUploadSerializer(serializers.Serializer):
@@ -158,10 +170,8 @@ class QRCodeSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "qr_url", "scan_count", "last_scanned_at"]
 
     def get_qr_url(self, obj: QRCode) -> str | None:
-        request = self.context.get("request")
-        if obj.image and request:
-            return request.build_absolute_uri(obj.image.url)
-        return None
+        """Return a signed, expiring URL for the QR image."""
+        return signed_file_url(self.context.get("request"), obj, "qr")
 
 
 # --- Memorial Page ---
@@ -190,9 +200,7 @@ class MemorialPageListSerializer(serializers.ModelSerializer):
                 media_type="portrait", is_primary_portrait=True
             ).first()
         if portrait and portrait.file:
-            request = self.context.get("request")
-            if request:
-                return request.build_absolute_uri(portrait.file.url)
+            return signed_file_url(self.context.get("request"), portrait, "media")
         return None
 
 

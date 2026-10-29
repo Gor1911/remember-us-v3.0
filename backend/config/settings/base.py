@@ -106,6 +106,10 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "mediafiles"
+# Private media is served only via signed, expiring URLs (/media/s/<token>/<name>).
+MEDIA_URL_MAX_AGE = env.int("MEDIA_URL_MAX_AGE", default=6 * 3600)  # seconds
+# True behind nginx: Django authorizes, nginx streams from the internal /protected-media/.
+MEDIA_USE_X_ACCEL = env.bool("MEDIA_USE_X_ACCEL", default=False)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -195,9 +199,21 @@ AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID", default="")
 AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="")
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="remember-us-media")
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
-AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+AWS_S3_CUSTOM_DOMAIN = None  # a custom domain would disable presigned URLs
 AWS_DEFAULT_ACL = "private"
+AWS_QUERYSTRING_AUTH = True
+AWS_QUERYSTRING_EXPIRE = MEDIA_URL_MAX_AGE
 AWS_S3_FILE_OVERWRITE = False
+
+# --- Email ---
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Remember US <no-reply@example.com>")
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 3  # seconds
 
 # --- External APIs ---
 LIVEPORTRAIT_API_KEY = env("LIVEPORTRAIT_API_KEY", default="")

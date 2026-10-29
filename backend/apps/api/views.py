@@ -2,11 +2,20 @@
 from __future__ import annotations
 
 import os
+from uuid import UUID
 
 from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.mail import send_mail
+from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import Prefetch, QuerySet
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -17,7 +26,9 @@ from rest_framework.response import Response
 from apps.media.models import MediaFile
 from apps.pages.models import MemorialPage, PageState
 from apps.qr.models import QRCode
+from apps.users.models import User
 
+from .export import build_export_zip
 from .permissions import (
     CanAccessMemorialPage,
     IsAdmin,
@@ -52,8 +63,8 @@ class AuthViewSet(viewsets.ViewSet):
     throttle_scope: str | None = None  # set per-route in urls.py
 
     def get_permissions(self):
-        """Registration is open; every other auth action requires a login."""
-        if self.action == "register":
+        """Registration and password reset are open; everything else requires a login."""
+        if self.action in ("register", "password_reset", "password_reset_confirm"):
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -72,6 +83,61 @@ class AuthViewSet(viewsets.ViewSet):
             UserDetailSerializer(user).data,
             status_code=status.HTTP_201_CREATED,
         )
+
+    @action(detail=False, methods=["post"], url_path="password-reset")
+    def password_reset(self, request: Request) -> Response:
+        """Email a reset link. Always 200 for a well-formed email (no enumeration)."""
+        email = request.data.get("email")
+        try:
+            if not isinstance(email, str):
+                raise DjangoValidationError("Enter a valid email address.")
+            email = email.strip()
+            validate_email(email)
+        except DjangoValidationError:
+            raise ValidationError({"email": "Enter a valid email address."}) from None
+        user = User.objects.filter(email__iexact=email, is_active=True, is_deleted=False).first()
+        if user is not None:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            link = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?uid={uid}&token={token}"
+            send_mail(
+                subject="Reset your Remember US password",
+                message=(
+                    "We received a request to reset your Remember US password.\n\n"
+                    f"Open this link to choose a new password:\n{link}\n\n"
+                    "If you did not request this, you can ignore this email."
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+            )
+        return success(None)
+
+    @action(detail=False, methods=["post"], url_path="password-reset/confirm")
+    def password_reset_confirm(self, request: Request) -> Response:
+        """Set a new password using the emailed uid + token."""
+        uid, token, password = (request.data.get(k) for k in ("uid", "token", "password"))
+        invalid = Response(
+            {"success": False, "error": "Invalid or expired reset link.", "code": "INVALID_TOKEN"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+        if not isinstance(password, str) or not password:
+            raise ValidationError({"password": "This field is required."})
+        if not (isinstance(uid, str) and uid and isinstance(token, str) and token):
+            return invalid
+        try:
+            user_pk = UUID(force_str(urlsafe_base64_decode(uid)))
+        except (ValueError, TypeError, OverflowError):
+            return invalid
+        user = User.objects.filter(pk=user_pk, is_active=True, is_deleted=False).first()
+        if user is None or not default_token_generator.check_token(user, token):
+            return invalid
+        try:
+            validate_password(password, user)
+        except DjangoValidationError as exc:
+            raise ValidationError({"password": list(exc.messages)}) from None
+        user.set_password(password)
+        user.save(update_fields=["password"])
+        return success(None)
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def me(self, request: Request) -> Response:
@@ -236,6 +302,23 @@ class MemorialPageViewSet(viewsets.ViewSet):
             pass
 
         return success({"slug": page.slug, "redirect": page.memorial_url})
+
+    @action(detail=True, methods=["get"], url_path="export")
+    def export(self, request: Request, slug: str | None = None) -> Response:
+        """Download all page data and media as a ZIP (page owner or admin)."""
+        page = get_object_or_404(MemorialPage, slug=slug)
+        if not (request.user.is_admin or page.owner_id == request.user.id):
+            return Response(
+                {"success": False, "error": "Page not found.", "code": "NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        archive = build_export_zip(page)
+        return FileResponse(
+            archive,
+            as_attachment=True,
+            filename=f"remember-us-{page.slug}.zip",
+            content_type="application/zip",
+        )
 
     def _check_page_ownership(self, request: Request, page: MemorialPage) -> None:
         """Raise 403 if user doesn't own the page and is not admin."""

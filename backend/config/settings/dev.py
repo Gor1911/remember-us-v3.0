@@ -40,3 +40,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Use local file storage in dev
 DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+
+# Print emails to the console unless EMAIL_BACKEND is set explicitly
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")  # noqa: F405

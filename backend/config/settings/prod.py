@@ -23,6 +23,13 @@ REST_FRAMEWORK = {  # noqa: F405
     "NUM_PROXIES": 1 if TRUST_X_FORWARDED_FOR else 0,
 }
 
+# Email: SMTP (EMAIL_HOST / EMAIL_HOST_USER / EMAIL_HOST_PASSWORD from env)
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")  # noqa: F405
+
+# Behind nginx: Django authorizes media, nginx serves via internal /protected-media/
+# (ignored when S3 storage returns presigned URLs).
+MEDIA_USE_X_ACCEL = env.bool("MEDIA_USE_X_ACCEL", default=True)  # noqa: F405
+
 # S3 media storage
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 STATICFILES_STORAGE = "storages.backends.s3boto3.S3StaticStorage"
