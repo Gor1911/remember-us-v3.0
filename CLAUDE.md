@@ -16,7 +16,7 @@ No public access. QR-only entry. Read-only for guests.
 cd frontend && npm run dev       # dev server (port 3000)
 cd frontend && npm run build     # production build
 cd frontend && npm run lint      # ESLint
-cd frontend && npm test          # Jest tests
+cd frontend && npx tsc --noEmit  # type check (no frontend unit tests yet)
 ```
 
 ### Backend
@@ -46,6 +46,7 @@ cd backend && ruff check .                  # lint
   - e.g. `[frontend] feat: hero section animation`
   - e.g. `[backend] fix: qr hash collision`
 - Run tests before push
+- CI (`.github/workflows/ci.yml`) runs ruff, migration check and pytest for the backend, and lint, type check and build for the frontend
 
 ## See Also
 - @.claude/rules/frontend.md — Next.js/Tailwind/GSAP rules
