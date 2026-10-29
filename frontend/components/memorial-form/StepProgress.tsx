@@ -16,14 +16,14 @@ export const StepProgress = ({ step }: StepProgressProps) => (
             className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium transition-colors duration-300 ${
               done ? 'bg-[#8B0000] text-white'
               : current ? 'bg-[#8B0000]/10 border border-[#8B0000] text-[#8B0000]'
-              : 'bg-white border border-[#1A1614]/[0.12] text-[#8A7F74]'
+              : 'bg-white border border-[#1A1614]/[0.12] text-muted'
             }`}
           >
             {done ? <CheckIcon className="w-3.5 h-3.5" /> : i + 1}
           </div>
           <span
             className={`text-xs font-medium hidden sm:block ${
-              current ? 'text-[#1A1614]' : done ? 'text-[#6B6560]' : 'text-[#8A7F74]'
+              current ? 'text-[#1A1614]' : done ? 'text-[#6B6560]' : 'text-muted'
             }`}
           >
             {label}

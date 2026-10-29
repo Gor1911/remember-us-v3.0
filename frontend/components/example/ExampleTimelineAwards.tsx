@@ -12,7 +12,7 @@ function SectionLabel({ children }: { children: string }) {
   return (
     <div className="section-label flex items-center gap-2.5 mb-10">
       <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-      <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.12em] font-medium">{children}</span>
+      <span className="text-muted text-[11px] uppercase tracking-[0.12em] font-medium">{children}</span>
     </div>
   );
 }
@@ -51,7 +51,7 @@ export function ExampleTimelineAwards() {
                     </div>
                     <div className="pb-6 pt-1 pl-3">
                       <p className="text-[#1A1614] font-medium text-sm">{item.label}</p>
-                      <p className="text-[#1A1614]/55 text-sm">{item.desc}</p>
+                      <p className="text-muted text-sm">{item.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -68,7 +68,7 @@ export function ExampleTimelineAwards() {
                     <MedalIcon />
                   </div>
                   <h3 className="text-[#1A1614] font-semibold text-sm">{award.name}</h3>
-                  <p className="text-[#1A1614]/55 text-xs leading-relaxed">{award.desc}</p>
+                  <p className="text-muted text-xs leading-relaxed">{award.desc}</p>
                 </div>
               ))}
             </div>

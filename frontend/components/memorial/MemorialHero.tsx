@@ -103,7 +103,7 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
               />
             ) : (
               <div className="w-full h-full bg-[#EDE8E0] flex flex-col items-center justify-center gap-3">
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-[#8A7F74]" aria-hidden="true">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-muted" aria-hidden="true">
                   <circle cx="12" cy="8.5" r="3.5" />
                   <path d="M4.5 20c.6-3.6 3.6-5.5 7.5-5.5s6.9 1.9 7.5 5.5" />
                 </svg>
@@ -131,7 +131,7 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
       >
         <div className="name-label flex items-center justify-center gap-2 mb-4">
           <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-          <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.14em] font-medium">
+          <span className="text-muted text-[11px] uppercase tracking-[0.14em] font-medium">
             In Memory Of
           </span>
         </div>
@@ -147,7 +147,7 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
             </p>
           )}
           {dateRange && (
-            <p className="text-[#8A7F74] text-sm mt-1 tracking-widest">{dateRange}</p>
+            <p className="text-muted text-sm mt-1 tracking-widest">{dateRange}</p>
           )}
         </div>
 

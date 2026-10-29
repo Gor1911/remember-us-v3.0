@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { MemorialPageListItem } from '@/app/lib/types';
 import { StatePill } from './StatePill';
 import { TypeIcon } from './Icons';
+import { ExportArchiveButton } from './ExportArchiveButton';
 
 const year = (iso: string | null) => (iso ? new Date(iso).getFullYear().toString() : '—');
 
@@ -16,13 +17,13 @@ interface MemorialCardProps {
 }
 
 const btn =
-  'flex-1 py-2.5 text-center text-xs font-medium rounded-[12px] transition-colors no-underline';
+  'flex-1 flex items-center justify-center py-2.5 text-center text-xs font-medium rounded-[12px] transition-colors no-underline';
 
 export const MemorialCard = ({ page, showOwner, canSubmit, busy, onSubmit }: MemorialCardProps) => (
   <div className="memorial-card glass rounded-[24px] p-6 flex flex-col gap-4 hover:bg-white/90 transition-colors duration-200">
     <div className="flex items-start justify-between gap-3">
       <div className="flex flex-col gap-1 min-w-0">
-        <span className="flex items-center gap-1.5 text-[10px] text-[#8A7F74] uppercase tracking-widest font-medium mb-1">
+        <span className="flex items-center gap-1.5 text-[10px] text-muted uppercase tracking-widest font-medium mb-1">
           <TypeIcon type={page.page_type} className="w-3.5 h-3.5" />
           {page.page_type === 'military' ? 'Military' : 'Civilian'}
         </span>
@@ -33,7 +34,7 @@ export const MemorialCard = ({ page, showOwner, canSubmit, busy, onSubmit }: Mem
           {year(page.birth_date)} — {year(page.death_date)}
         </p>
         {showOwner && (
-          <p className="text-[#8A7F74] text-xs mt-1 truncate">Owner: {page.owner.display_name || page.owner.email || 'Unknown'}</p>
+          <p className="text-muted text-xs mt-1 truncate">Owner: {page.owner.display_name || page.owner.email || 'Unknown'}</p>
         )}
       </div>
       <StatePill state={page.state} />
@@ -52,12 +53,12 @@ export const MemorialCard = ({ page, showOwner, canSubmit, busy, onSubmit }: Mem
 
     {page.slug && (
       <p className="text-xs truncate">
-        <span className="text-[#8A7F74]">remember.us/</span>
+        <span className="text-muted">remember.us/</span>
         <span className="text-[#6B6560] font-mono">{page.slug}</span>
       </p>
     )}
 
-    <div className="flex gap-2 mt-1">
+    <div className="flex flex-wrap gap-2 mt-1">
       {page.slug ? (
         <Link
           href={`/${page.slug}`}
@@ -66,7 +67,7 @@ export const MemorialCard = ({ page, showOwner, canSubmit, busy, onSubmit }: Mem
           View
         </Link>
       ) : (
-        <span aria-disabled="true" className={`${btn} text-[#8A7F74] bg-[#1A1614]/[0.04] cursor-not-allowed`}>
+        <span aria-disabled="true" className={`${btn} text-muted bg-[#1A1614]/[0.04] cursor-not-allowed`}>
           Unavailable
         </span>
       )}
@@ -80,6 +81,7 @@ export const MemorialCard = ({ page, showOwner, canSubmit, busy, onSubmit }: Mem
           {busy ? 'Submitting…' : 'Submit for review'}
         </button>
       )}
+      {page.slug && <ExportArchiveButton slug={page.slug} className={btn} />}
     </div>
   </div>
 );

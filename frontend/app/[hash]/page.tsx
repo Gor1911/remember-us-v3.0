@@ -88,10 +88,10 @@ export default function MemorialPage() {
           <Link href="/" className="flex items-center gap-2 no-underline">
             <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
             <span className="text-[#1A1614] text-xs tracking-tight font-medium">
-              Remember <span className="text-[#8A7F74]">US</span>
+              Remember <span className="text-muted">US</span>
             </span>
           </Link>
-          <p className="text-[#8A7F74] text-xs">Designed for Eternity. Built in USA.</p>
+          <p className="text-muted text-xs">Designed for Eternity. Built in USA.</p>
         </div>
       </footer>
 

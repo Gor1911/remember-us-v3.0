@@ -9,6 +9,8 @@
   --color-text-primary: #1A1614;
   --color-text-muted: #6B6560;
   --color-aluminum: #8A7F74;
+  /* AA-safe muted text for small copy (>=5:1 on cream surfaces) */
+  --color-muted: #6B6560;
 
   /* Military */
   --color-military-bg: #F0EDE8;

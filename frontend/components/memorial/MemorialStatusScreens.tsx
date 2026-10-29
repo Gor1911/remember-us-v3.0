@@ -13,13 +13,13 @@ export const ModerationScreen = ({ state }: ModerationScreenProps) => {
     <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center px-6 text-center">
       <div className="flex items-center gap-2 mb-8">
         <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-        <span className="text-[#8A7F74] text-xs uppercase tracking-[0.15em]">
+        <span className="text-muted text-xs uppercase tracking-[0.15em]">
           {isDraft ? 'Draft' : 'Under Review'}
         </span>
       </div>
       <div className="w-14 h-14 rounded-full bg-white border border-[#1A1614]/[0.08] flex items-center justify-center mb-6">
         {isDraft ? (
-          <svg className="w-6 h-6 text-[#8A7F74]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <svg className="w-6 h-6 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
         ) : (
@@ -45,7 +45,7 @@ export const NotFoundScreen = () => (
   <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center px-6 text-center">
     <div className="flex items-center gap-2 mb-8">
       <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-      <span className="text-[#8A7F74] text-xs uppercase tracking-[0.15em]">Access Denied</span>
+      <span className="text-muted text-xs uppercase tracking-[0.15em]">Access Denied</span>
     </div>
     <h1 className="text-[#1A1614] text-2xl font-semibold tracking-tight mb-3">Memorial Not Found</h1>
     <p className="text-[#6B6560] text-sm max-w-sm leading-relaxed mb-10">

@@ -55,12 +55,12 @@ export const MemorialGallery = ({ mediaFiles }: MemorialGalleryProps) => {
           <div className="mg-header flex items-center justify-between mb-10">
             <div className="flex items-center gap-2.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-              <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.12em] font-medium">
+              <span className="text-muted text-[11px] uppercase tracking-[0.12em] font-medium">
                 Photo Gallery
               </span>
             </div>
             {photos.length > 0 && (
-              <span className="text-[#8A7F74] text-xs">{photos.length} {photos.length === 1 ? 'photo' : 'photos'}</span>
+              <span className="text-muted text-xs">{photos.length} {photos.length === 1 ? 'photo' : 'photos'}</span>
             )}
           </div>
 

@@ -36,28 +36,28 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-2.5 no-underline w-fit">
               <span className="w-2 h-2 rounded-full bg-[#8B0000]" />
               <span className="text-[#1A1614] font-semibold text-[15px] tracking-tight">
-                Remember<span className="text-[#8A7F74] font-normal"> US</span>
+                Remember<span className="text-muted font-normal"> US</span>
               </span>
             </Link>
-            <p className="text-[#1A1614]/50 text-sm leading-relaxed max-w-[260px]">
+            <p className="text-muted text-sm leading-relaxed max-w-[260px]">
               A premium private digital memorial. Access by QR code only.
               Built with respect for memory.
             </p>
             <div className="flex items-center gap-2 w-fit px-3 py-1.5 rounded-full border border-[#1A1614]/[0.10] bg-[#1A1614]/[0.03]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-              <span className="text-[#8A7F74] text-[11px] tracking-widest uppercase font-medium">USA · Premium</span>
+              <span className="text-muted text-[11px] tracking-widest uppercase font-medium">USA · Premium</span>
             </div>
           </div>
 
           {NAV_COLUMNS.map((col) => (
             <div key={col.title} className="flex flex-col gap-4">
-              <span className="text-[#1A1614]/40 text-[11px] uppercase tracking-widest font-medium">{col.title}</span>
+              <span className="text-muted text-[11px] uppercase tracking-widest font-medium">{col.title}</span>
               <ul className="flex flex-col gap-3 list-none">
                 {col.links.map(({ label, href }) => (
                   <li key={label}>
                     <Link
                       href={href}
-                      className="text-[#1A1614]/60 hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
+                      className="text-muted hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
                     >
                       {label}
                     </Link>
@@ -71,8 +71,8 @@ export function Footer() {
 
       <div className="border-t border-[#1A1614]/[0.06]">
         <div className="site-container py-6 flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-[#1A1614]/40 text-xs">© {new Date().getFullYear()} Remember US. All rights reserved.</p>
-          <p className="text-[#1A1614]/40 text-xs tracking-wide">Designed for Eternity. Built in USA.</p>
+          <p className="text-muted text-xs">© {new Date().getFullYear()} Remember US. All rights reserved.</p>
+          <p className="text-muted text-xs tracking-wide">Designed for Eternity. Built in USA.</p>
         </div>
       </div>
     </footer>

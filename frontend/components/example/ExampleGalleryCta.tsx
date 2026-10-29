@@ -40,9 +40,9 @@ export function ExampleGalleryCta() {
             <div className="gallery-header flex items-center justify-between mb-10">
               <div className="flex items-center gap-2.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-                <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.12em] font-medium">Photo Gallery</span>
+                <span className="text-muted text-[11px] uppercase tracking-[0.12em] font-medium">Photo Gallery</span>
               </div>
-              <span className="text-[#1A1614]/40 text-xs">{EXAMPLE.gallery.length} photos</span>
+              <span className="text-muted text-xs">{EXAMPLE.gallery.length} photos</span>
             </div>
             <div className="gallery-wrap">
               <GalleryLightbox photos={EXAMPLE.gallery} />
@@ -55,7 +55,7 @@ export function ExampleGalleryCta() {
         <div className="cta-inner site-container py-16 text-center flex flex-col items-center gap-6">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-            <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.14em] font-medium">Create Your Memorial</span>
+            <span className="text-muted text-[11px] uppercase tracking-[0.14em] font-medium">Create Your Memorial</span>
           </div>
           <h2 className="text-[#1A1614] font-bold text-2xl xl:text-3xl tracking-tight max-w-lg">
             Honor your loved one with a memorial that lasts forever.

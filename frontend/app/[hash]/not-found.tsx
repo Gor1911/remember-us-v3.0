@@ -6,7 +6,7 @@ export default function NotFound() {
       <div className="text-center flex flex-col items-center gap-6">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-          <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.14em] font-medium">
+          <span className="text-muted text-[11px] uppercase tracking-[0.14em] font-medium">
             Memorial Not Found
           </span>
         </div>

@@ -41,7 +41,7 @@ export const ModerationQueue = ({ items, busySlug, onApprove, onReject }: Modera
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="min-w-0">
                     <p className="flex items-center gap-1.5 text-[#1A1614] font-semibold text-sm">
-                      <TypeIcon type={p.page_type} className="w-3.5 h-3.5 text-[#8A7F74]" />
+                      <TypeIcon type={p.page_type} className="w-3.5 h-3.5 text-muted" />
                       {p.first_name} {p.last_name}
                     </p>
                     <p className="text-xs text-[#6B6560] mt-0.5">by {p.owner.display_name || p.owner.email || 'Unknown'}</p>

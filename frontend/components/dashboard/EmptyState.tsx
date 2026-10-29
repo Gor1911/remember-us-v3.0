@@ -3,7 +3,7 @@ import { PersonIcon } from './Icons';
 
 export const EmptyState = () => (
   <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
-    <div className="w-16 h-16 rounded-full bg-white border border-[#1A1614]/[0.08] flex items-center justify-center text-[#8A7F74]">
+    <div className="w-16 h-16 rounded-full bg-white border border-[#1A1614]/[0.08] flex items-center justify-center text-muted">
       <PersonIcon className="w-7 h-7" />
     </div>
     <div>

@@ -46,7 +46,7 @@ export function HeroSection() {
           <div className="bento-cell glass bento-pad-lg flex flex-col gap-4 order-first md:order-none">
             <div className="flex items-center gap-2.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-              <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">
+              <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">
                 Premium Digital Memorial
               </span>
             </div>
@@ -56,7 +56,7 @@ export function HeroSection() {
                 <br />
                 <span className="text-[#8A7F74]">lives on.</span>
               </h1>
-              <p className="text-[#1A1614]/60 text-sm md:text-base xl:text-lg leading-relaxed max-w-xl">
+              <p className="text-muted text-sm md:text-base xl:text-lg leading-relaxed max-w-xl">
                 A private digital memorial. Access by QR code only.
                 A living animated portrait.
               </p>
@@ -70,14 +70,14 @@ export function HeroSection() {
               </button>
               <Link
                 href="/example"
-                className="px-6 py-3 glass text-[#1A1614]/60 hover:text-[#1A1614] font-medium text-sm rounded-[14px] transition-colors duration-200 no-underline"
+                className="px-6 py-3 glass text-muted hover:text-[#1A1614] font-medium text-sm rounded-[14px] transition-colors duration-200 no-underline"
               >
-                View Example
+                Explore an Example
               </Link>
               {isAuthenticated && (
                 <Link
                   href="/dashboard"
-                  className="px-6 py-3 glass text-[#1A1614]/60 hover:text-[#1A1614] font-medium text-sm rounded-[14px] transition-colors duration-200 no-underline"
+                  className="px-6 py-3 glass text-muted hover:text-[#1A1614] font-medium text-sm rounded-[14px] transition-colors duration-200 no-underline"
                 >
                   My Memorials
                 </Link>

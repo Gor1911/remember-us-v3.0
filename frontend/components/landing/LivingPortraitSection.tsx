@@ -32,7 +32,7 @@ export function LivingPortraitSection() {
       <div className="site-container">
         <div className="lp-label flex items-center gap-2.5 mb-6">
           <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-          <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">Living Portrait</span>
+          <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">Living Portrait</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
@@ -42,13 +42,13 @@ export function LivingPortraitSection() {
               <br />
               <span className="text-[#8A7F74]">looks back at you.</span>
             </h2>
-            <p className="lp-text text-[#1A1614]/50 text-base leading-relaxed max-w-md">
+            <p className="lp-text text-muted text-base leading-relaxed max-w-md">
               LivePortrait technology brings a photograph to life. Eyes move,
               expressions breathe — as if the person is present beside you.
             </p>
             <ul className="flex flex-col gap-3">
               {ITEMS.map((item) => (
-                <li key={item} className="lp-item flex items-center gap-3 text-[#1A1614]/60 text-sm">
+                <li key={item} className="lp-item flex items-center gap-3 text-muted text-sm">
                   <span className="w-1 h-1 rounded-full bg-[#8B0000] shrink-0" />
                   {item}
                 </li>
@@ -56,15 +56,18 @@ export function LivingPortraitSection() {
             </ul>
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center">
             <div className="lp-mockup relative w-[240px] h-[480px] rounded-[48px] overflow-hidden border border-[#1A1614]/[0.12] shadow-[0_0_0_8px_rgba(139,0,0,0.06),0_40px_80px_rgba(26,22,20,0.12)]">
               <PortraitVideo className="absolute inset-0 w-full h-full object-cover object-center" />
               <div className="absolute inset-0 rounded-[48px] ring-1 ring-inset ring-[#1A1614]/10" />
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#1A1614]/10 whitespace-nowrap">
+              <div className="absolute top-5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm border border-[#1A1614]/10 whitespace-nowrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-                <span className="text-[#1A1614]/60 text-[10px] font-medium tracking-wider uppercase">Living Portrait</span>
+                <span className="text-muted text-[11px] font-medium tracking-wider uppercase">AI Living Portrait</span>
               </div>
             </div>
+            <p className="lp-mockup mt-4 text-center text-muted text-[13px]">
+              AI-animated from a single photograph. Demo.
+            </p>
           </div>
         </div>
       </div>

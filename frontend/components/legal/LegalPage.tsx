@@ -25,8 +25,8 @@ export const LegalPage = ({ title, sections }: LegalPageProps) => (
         </div>
 
         <nav aria-label="Table of contents" className="glass rounded-[32px] p-6 mt-10">
-          <h2 className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium mb-4">Contents</h2>
-          <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-[#8A7F74]">
+          <h2 className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium mb-4">Contents</h2>
+          <ol className="flex flex-col gap-2 list-decimal pl-5 marker:text-muted">
             {sections.map((s) => (
               <li key={s.id}>
                 <a

@@ -16,7 +16,7 @@ export const Field = ({ label, htmlFor, hint, children }: FieldProps) => (
       {label}
     </label>
     {children}
-    {hint && <p className="text-[#8A7F74] text-xs">{hint}</p>}
+    {hint && <p className="text-muted text-xs">{hint}</p>}
   </div>
 );
 

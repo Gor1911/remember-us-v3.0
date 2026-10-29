@@ -34,6 +34,10 @@ export function ExampleHero() {
         <div className="portrait-card opacity-0 relative w-72 h-[400px] md:w-64 md:h-[420px] rounded-[28px] overflow-hidden border border-[#1A1614]/10 shadow-[0_0_0_8px_rgba(139,0,0,0.08),0_40px_80px_rgba(26,22,20,0.15)]">
           <PortraitVideo className="absolute inset-0 w-full h-full object-cover object-center" />
           <div className="absolute inset-0 rounded-[28px] ring-1 ring-inset ring-[#1A1614]/10" />
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 border border-[#1A1614]/10 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
+            <span className="text-muted text-[11px] font-medium tracking-wider uppercase">AI Living Portrait</span>
+          </div>
         </div>
         <div className="veteran-badge opacity-0 absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#8B0000] border border-[#8B0000]">
           <span className="w-1.5 h-1.5 rounded-full bg-white/80" />

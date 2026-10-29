@@ -31,14 +31,14 @@ export function CtaBanner() {
         <div className="cta-card glass rounded-[32px] bento-pad-lg flex flex-col items-center text-center gap-8">
           <div className="flex items-center gap-2.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-            <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">Get Started Today</span>
+            <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">Get Started Today</span>
           </div>
           <h2 className="text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight max-w-2xl">
             Create a memorial
             <br />
             <span className="text-[#8A7F74]">that lasts forever.</span>
           </h2>
-          <p className="text-[#1A1614]/50 text-base leading-relaxed max-w-lg">
+          <p className="text-muted text-base leading-relaxed max-w-lg">
             A premium memorial ready in 24 hours. You provide the photos and documents —
             we take care of everything else.
           </p>
@@ -51,9 +51,9 @@ export function CtaBanner() {
             </button>
             <Link
               href="/example"
-              className="px-8 py-4 glass text-[#1A1614]/60 hover:text-[#1A1614] font-medium text-sm rounded-[14px] transition-colors duration-200 no-underline"
+              className="px-8 py-4 glass text-muted hover:text-[#1A1614] font-medium text-sm rounded-[14px] transition-colors duration-200 no-underline"
             >
-              View Example
+              Explore an Example
             </Link>
           </div>
         </div>

@@ -45,7 +45,7 @@ export function FaqSection() {
         <div className="faq-header text-center mb-16">
           <div className="flex items-center justify-center gap-2.5 mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-            <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">FAQ</span>
+            <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">FAQ</span>
           </div>
           <h2 className="text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
             Questions,

@@ -67,7 +67,7 @@ export const MemorialBio = ({ memorial }: MemorialBioProps) => {
               <div className="bio-card bg-white border border-[#1A1614]/[0.08] rounded-[32px] p-8 flex flex-col gap-6">
                 <div className="flex items-center gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-                  <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.12em] font-medium">
+                  <span className="text-muted text-[11px] uppercase tracking-[0.12em] font-medium">
                     Life Events
                   </span>
                 </div>

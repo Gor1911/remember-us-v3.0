@@ -17,6 +17,22 @@ export const metadata: Metadata = {
   description:
     'A private digital memorial with a living animated portrait, biography timeline and photo gallery. Shared only through a personal QR code.',
   robots: { index: true, follow: true },
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    url: '/',
+    siteName: 'Remember US',
+    title: 'Remember US — Digital Memorial',
+    description:
+      'A private digital memorial with a living animated portrait, biography timeline and photo gallery. Shared only through a personal QR code.',
+    images: [{ url: '/images/arlington.jpg', alt: 'Remember US' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Remember US — Digital Memorial',
+    description: 'A private digital memorial shared only through a personal QR code.',
+    images: ['/images/arlington.jpg'],
+  },
 };
 
 export default function LandingPage() {

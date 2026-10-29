@@ -41,27 +41,27 @@ export function QrSection() {
                   className="w-[145px] h-[145px] [image-rendering:pixelated]"
                 />
               </div>
-              <p className="text-[#1A1614]/40 text-xs tracking-widest uppercase">Scan to access</p>
+              <p className="text-muted text-xs tracking-widest uppercase">Scan to access</p>
             </div>
           </div>
 
           <div className="flex flex-col gap-6 order-1 md:order-2">
             <div className="qr-text flex items-center gap-2.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-              <span className="uppercase text-[#8A7F74] text-[11px] tracking-[0.12em] font-medium">QR Access</span>
+              <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">QR Access</span>
             </div>
             <h2 className="qr-text text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
               A physical link
               <br />
               <span className="text-[#8A7F74]">to digital memory.</span>
             </h2>
-            <p className="qr-text text-[#1A1614]/50 text-base leading-relaxed max-w-md">
+            <p className="qr-text text-muted text-base leading-relaxed max-w-md">
               The QR code is placed on a headstone, memorial plaque, or a frame at home.
               One scan — and the memorial opens on any screen.
             </p>
             <ul className="flex flex-col gap-3">
               {ITEMS.map((item) => (
-                <li key={item} className="qr-item flex items-center gap-3 text-[#1A1614]/60 text-sm">
+                <li key={item} className="qr-item flex items-center gap-3 text-muted text-sm">
                   <span className="w-1 h-1 rounded-full bg-[#8B0000] shrink-0" />
                   {item}
                 </li>

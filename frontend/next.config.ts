@@ -19,9 +19,39 @@ if (publicHost) {
   remotePatterns.push({ protocol: "https", hostname: publicHost, pathname: "/media/**" });
 }
 
+// Routes that are NOT memorial slugs (single-segment top-level paths).
+const NON_MEMORIAL =
+  'example|terms|privacy|dashboard|memorial|forgot-password|reset-password|_next|images|api|media|favicon.ico|robots.txt|sitemap.xml';
+
+const SECURITY_HEADERS = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+];
+
 const nextConfig: NextConfig = {
   output: "standalone",
   images: { remotePatterns },
+  async headers() {
+    return [
+      { source: "/:path*", headers: SECURITY_HEADERS },
+      // Everything except the two public marketing pages is noindex (robots.txt is not access control).
+      {
+        source: "/:path((?!example$|_next/|images/).+)",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      // The memorial URL (and reset-password token URL) is a secret: never leak it via Referer.
+      {
+        source: `/:slug((?!(?:${NON_MEMORIAL})$)[^/]+)`,
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+      {
+        source: "/:page(forgot-password|reset-password)",
+        headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      },
+    ];
+  },
   async rewrites() {
     return [
       { source: "/api/:path*",   destination: `${backendUrl}/api/:path*` },

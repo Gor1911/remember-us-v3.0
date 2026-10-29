@@ -178,8 +178,35 @@ export const auth = {
   deleteAccount: (password: string) =>
     request<null>('/auth/me/delete/', { method: 'POST', body: JSON.stringify({ password }) }),
 
+  requestPasswordReset: (email: string) =>
+    request<null>('/auth/password-reset/', { method: 'POST', body: JSON.stringify({ email }) }),
+
+  confirmPasswordReset: (uid: string, token: string, password: string) =>
+    request<null>('/auth/password-reset/confirm/', {
+      method: 'POST',
+      body: JSON.stringify({ uid, token, password }),
+    }),
+
   logout: () => storage.clear(),
 };
+
+// ─── Binary download (owner/admin archive) ────────────────────────────────────
+
+async function download(path: string, retry = true): Promise<ApiResponse<Blob>> {
+  const headers = new Headers();
+  if (storage.access) headers.set('Authorization', `Bearer ${storage.access}`);
+
+  const res = await safeFetch(`${BASE}${path}`, { headers });
+  if (!res) return NETWORK_ERROR;
+
+  if (res.status === 401 && retry && storage.refresh) {
+    if (await refreshTokens()) return download(path, false);
+  }
+  if (res.ok && !(res.headers.get('Content-Type') ?? '').includes('json')) {
+    return { success: true, data: await res.blob() };
+  }
+  return parse<Blob>(res);
+}
 
 // ─── Memorial pages ────────────────────────────────────────────────────────────
 
@@ -207,6 +234,9 @@ export const pages = {
 
   delete: (slug: string) =>
     request<null>(`/pages/${slug}/`, { method: 'DELETE' }),
+
+  exportArchive: (slug: string) =>
+    download(`/pages/${slug}/export/`),
 
   submit: (slug: string) =>
     request<{ state: string }>(`/pages/${slug}/submit/`, { method: 'POST' }),

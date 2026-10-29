@@ -40,7 +40,7 @@ export function MemorialAwards({ awards }: MemorialAwardsProps) {
         <div className="max-w-4xl mx-auto">
           <div className="awards-label flex items-center gap-2.5 mb-10">
             <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-            <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.12em] font-medium">
+            <span className="text-muted text-[11px] uppercase tracking-[0.12em] font-medium">
               Military Awards
             </span>
           </div>
@@ -62,7 +62,7 @@ export function MemorialAwards({ awards }: MemorialAwardsProps) {
                   <p className="text-[#6B6560] text-xs leading-relaxed">{award.description}</p>
                 )}
                 {award.awarded_date && (
-                  <p className="text-[#8A7F74] text-[10px] font-mono">
+                  <p className="text-muted text-[10px] font-mono">
                     {new Date(award.awarded_date).getFullYear()}
                   </p>
                 )}
@@ -100,7 +100,7 @@ export function MemorialQr({ qrCode }: MemorialQrProps) {
       <div className="site-container py-16 flex flex-col items-center gap-6 qr-inner">
         <div className="flex items-center gap-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-          <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.12em] font-medium">
+          <span className="text-muted text-[11px] uppercase tracking-[0.12em] font-medium">
             QR Access
           </span>
         </div>
@@ -112,10 +112,10 @@ export function MemorialQr({ qrCode }: MemorialQrProps) {
             height={160}
             className="rounded-[12px]"
           />
-          <p className="text-[#8A7F74] text-xs tracking-widest uppercase">
+          <p className="text-muted text-xs tracking-widest uppercase">
             Scan to open memorial
           </p>
-          <p className="text-[#8A7F74] text-[10px]">
+          <p className="text-muted text-[10px]">
             Scanned {qrCode.scan_count} times
           </p>
         </div>

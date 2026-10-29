@@ -68,7 +68,7 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2.5 no-underline">
           <span className="w-2 h-2 rounded-full bg-[#8B0000]" />
           <span className="text-[#1A1614] font-semibold text-[15px] tracking-tight">
-            Remember<span className="text-[#8A7F74] font-normal"> US</span>
+            Remember<span className="text-muted font-normal"> US</span>
           </span>
         </Link>
 
@@ -78,7 +78,7 @@ export function Header() {
             <Link
               key={href}
               href={href}
-              className="text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
+              className="text-muted hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
             >
               {label}
             </Link>
@@ -92,13 +92,13 @@ export function Header() {
               <>
                 <Link
                   href="/dashboard"
-                  className="text-[#1A1614]/40 hover:text-[#1A1614] text-sm truncate max-w-[140px] transition-colors no-underline"
+                  className="text-muted hover:text-[#1A1614] text-sm truncate max-w-[140px] transition-colors no-underline"
                 >
                   {displayName}
                 </Link>
                 <button
                   onClick={onLogout}
-                  className="px-4 py-2 text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200"
+                  className="px-4 py-2 text-muted hover:text-[#1A1614] text-sm transition-colors duration-200"
                 >
                   Sign Out
                 </button>
@@ -113,7 +113,7 @@ export function Header() {
               <>
                 <button
                   onClick={onSignInClick}
-                  className="px-4 py-2 text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200"
+                  className="px-4 py-2 text-muted hover:text-[#1A1614] text-sm transition-colors duration-200"
                 >
                   Sign In
                 </button>
@@ -148,7 +148,7 @@ export function Header() {
               key={href}
               href={href}
               onClick={closeMenu}
-              className="text-[#1A1614]/60 hover:text-[#1A1614] text-base py-3 border-b border-[#1A1614]/[0.06] no-underline transition-colors"
+              className="text-muted hover:text-[#1A1614] text-base py-3 border-b border-[#1A1614]/[0.06] no-underline transition-colors"
             >
               {label}
             </Link>
@@ -159,13 +159,13 @@ export function Header() {
               <Link
                 href="/dashboard"
                 onClick={closeMenu}
-                className="text-[#1A1614]/60 hover:text-[#1A1614] text-sm truncate no-underline transition-colors"
+                className="text-muted hover:text-[#1A1614] text-sm truncate no-underline transition-colors"
               >
                 {displayName} · My Memorials
               </Link>
               <button
                 onClick={onLogout}
-                className="text-[#1A1614]/40 hover:text-[#1A1614] text-sm transition-colors shrink-0"
+                className="text-muted hover:text-[#1A1614] text-sm transition-colors shrink-0"
               >
                 Sign Out
               </button>
@@ -182,7 +182,7 @@ export function Header() {
           {!loading && !isAuthenticated && (
             <button
               onClick={onSignInClick}
-              className="w-full py-3 text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors"
+              className="w-full py-3 text-muted hover:text-[#1A1614] text-sm transition-colors"
             >
               Sign In
             </button>
