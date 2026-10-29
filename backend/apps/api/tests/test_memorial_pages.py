@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pytest
-from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.pages.models import MemorialPage, PageState
@@ -154,7 +153,11 @@ class TestStateTransitionsAPI:
 
 
 class TestErrorFormat:
+    @pytest.mark.django_db
     def test_error_response_format(self, api_client):
         """All errors must follow { success, error, code } format."""
         response = api_client.get("/api/v1/pages/nonexistent-slug/")
         assert response.status_code == 404
+        assert response.data["success"] is False
+        assert response.data["code"] == "NOT_FOUND"
+        assert response.data["error"]

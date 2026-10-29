@@ -7,7 +7,6 @@ import string
 
 from django.conf import settings
 
-
 _ALPHABET = string.ascii_lowercase + string.digits  # no uppercase, no symbols
 
 

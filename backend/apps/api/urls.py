@@ -6,9 +6,23 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import AuthViewSet, MediaFileViewSet, MemorialPageViewSet, QRCodeViewSet
 
+
+class ThrottledTokenObtainPairView(TokenObtainPairView):
+    """Token obtain endpoint limited by the `auth` throttle scope."""
+
+    throttle_scope = "auth"
+
+
+class ThrottledTokenRefreshView(TokenRefreshView):
+    """Token refresh endpoint limited by the `auth` throttle scope."""
+
+    throttle_scope = "auth"
+
+
 # Auth
-auth_register = AuthViewSet.as_view({"post": "register"})
+auth_register = AuthViewSet.as_view({"post": "register"}, throttle_scope="auth")
 auth_me = AuthViewSet.as_view({"get": "me"})
+auth_me_delete = AuthViewSet.as_view({"post": "delete_account"}, throttle_scope="auth")
 
 # Memorial Pages
 page_list_create = MemorialPageViewSet.as_view({"get": "list", "post": "create"})
@@ -18,7 +32,7 @@ page_detail = MemorialPageViewSet.as_view(
 page_submit = MemorialPageViewSet.as_view({"post": "submit"})
 page_approve = MemorialPageViewSet.as_view({"post": "approve"})
 page_reject = MemorialPageViewSet.as_view({"post": "reject"})
-page_scan = MemorialPageViewSet.as_view({"get": "scan"})
+page_scan = MemorialPageViewSet.as_view({"get": "scan"}, throttle_scope="scan")
 page_moderation = MemorialPageViewSet.as_view({"get": "list_moderation"})
 
 # Media
@@ -32,8 +46,9 @@ urlpatterns = [
     # --- Auth ---
     path("auth/register/", auth_register, name="auth-register"),
     path("auth/me/", auth_me, name="auth-me"),
-    path("auth/token/", TokenObtainPairView.as_view(), name="token-obtain"),
-    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("auth/me/delete/", auth_me_delete, name="auth-me-delete"),
+    path("auth/token/", ThrottledTokenObtainPairView.as_view(), name="token-obtain"),
+    path("auth/token/refresh/", ThrottledTokenRefreshView.as_view(), name="token-refresh"),
 
     # --- Memorial Pages ---
     path("pages/", page_list_create, name="page-list"),

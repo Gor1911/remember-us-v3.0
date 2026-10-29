@@ -109,6 +109,9 @@ MEDIA_ROOT = BASE_DIR / "mediafiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# --- Proxy trust (only enable when behind a proxy that sets X-Forwarded-For) ---
+TRUST_X_FORWARDED_FOR = env.bool("TRUST_X_FORWARDED_FOR", default=False)
+
 # --- REST Framework ---
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -124,7 +127,26 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "apps.api.pagination.StandardPagination",
     "PAGE_SIZE": 20,
     "EXCEPTION_HANDLER": "apps.api.exceptions.custom_exception_handler",
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "300/min",
+        "user": "1000/min",
+        "scan": "30/min",
+        "auth": "10/min",
+    },
+    # 1 proxy (nginx) when X-Forwarded-For is trusted, otherwise use REMOTE_ADDR.
+    "NUM_PROXIES": 1 if TRUST_X_FORWARDED_FOR else 0,
 }
+
+# --- Media upload limits ---
+MAX_IMAGE_UPLOAD_BYTES = 15 * 1024 * 1024
+MAX_VIDEO_UPLOAD_BYTES = 200 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # non-file request bodies
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # larger files spool to disk
 
 # --- JWT ---
 from datetime import timedelta  # noqa: E402
@@ -138,6 +160,9 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
 }
+
+# --- Legal ---
+LEGAL_TERMS_VERSION = env("LEGAL_TERMS_VERSION", default="draft-2026-10")
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = env.list(

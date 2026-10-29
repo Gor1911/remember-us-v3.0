@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import IntegrityError, models, transaction
 
 from apps.core.models import BaseModel
 
@@ -94,6 +94,33 @@ class MemorialPage(BaseModel):
     def __str__(self) -> str:
         return f"{self.first_name} {self.last_name} [{self.state}] /{self.slug}"
 
+    def save(self, *args, **kwargs) -> None:
+        """Save the page, auto-generating a unique hashed slug when blank.
+
+        Covers every creation path (API, Django admin, shell). Retries on the
+        rare unique-index collision between slug check and insert.
+        """
+        if self.slug:
+            super().save(*args, **kwargs)
+            return
+
+        from apps.qr.utils import generate_unique_slug
+
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = {*update_fields, "slug"}
+
+        for attempt in range(5):
+            self.slug = generate_unique_slug()
+            try:
+                with transaction.atomic():
+                    super().save(*args, **kwargs)
+                return
+            except IntegrityError:
+                self.slug = ""
+                if attempt == 4:
+                    raise
+
     # --- State machine transitions ---
 
     def submit_for_moderation(self) -> None:
@@ -137,7 +164,10 @@ class MemorialPage(BaseModel):
         self.save(update_fields=["state", "moderation_note", "updated_at"])
 
     def mark_edited_by_owner(self) -> None:
-        """Any Owner edit on ACTIVE resets to MODERATION (rule requirement)."""
+        """Any Owner edit on ACTIVE resets to MODERATION (rule requirement).
+
+        Callers must not invoke this for Admin edits; admins do not un-publish.
+        """
         if self.state == PageState.ACTIVE:
             self.state = PageState.MODERATION
             self.save(update_fields=["state", "updated_at"])

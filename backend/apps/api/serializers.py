@@ -1,13 +1,14 @@
 """DRF serializers — never expose internal IDs, use UUIDs only."""
 from __future__ import annotations
 
+from django.conf import settings
 from rest_framework import serializers
 
-from apps.media.models import MediaFile
+from apps.media.models import MediaFile, MediaType
+from apps.media.validators import detect_media_kind
 from apps.pages.models import MemorialPage, MilitaryAward, TimelineEntry
 from apps.qr.models import QRCode
 from apps.users.models import User
-
 
 # --- User ---
 
@@ -19,28 +20,45 @@ class UserPublicSerializer(serializers.ModelSerializer):
         fields = ["id", "display_name", "role"]
 
 
+class UserOwnerSerializer(serializers.ModelSerializer):
+    """Owner info for authenticated page listings (owners see themselves, admins see all)."""
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "display_name", "role"]
+
+
 class UserDetailSerializer(serializers.ModelSerializer):
     """Full user info — only returned to the user themselves or admin."""
 
     class Meta:
         model = User
-        fields = ["id", "email", "display_name", "role", "created_at"]
-        read_only_fields = ["id", "created_at"]
+        fields = ["id", "email", "display_name", "role", "created_at", "terms_accepted_at", "terms_version"]
+        read_only_fields = ["id", "created_at", "terms_accepted_at", "terms_version"]
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """Register a new user."""
 
     password = serializers.CharField(write_only=True, min_length=8)
+    accept_terms = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         model = User
-        fields = ["email", "password", "display_name"]
+        fields = ["email", "password", "display_name", "accept_terms"]
 
     def create(self, validated_data: dict) -> User:
         """Create user with hashed password. New users get Owner role so they can create pages."""
+        from django.utils import timezone
+
         from apps.users.models import UserRole
-        return User.objects.create_user(role=UserRole.OWNER, **validated_data)
+        validated_data.pop("accept_terms", None)
+        return User.objects.create_user(
+            role=UserRole.OWNER,
+            terms_accepted_at=timezone.now(),
+            terms_version=settings.LEGAL_TERMS_VERSION,
+            **validated_data,
+        )
 
 
 # --- Media ---
@@ -64,6 +82,51 @@ class MediaFileSerializer(serializers.ModelSerializer):
         if obj.file and request:
             return request.build_absolute_uri(obj.file.url)
         return obj.file.url if obj.file else None
+
+
+class MediaUploadSerializer(serializers.Serializer):
+    """Validate an upload: type is detected server-side, never trusted from client."""
+
+    file = serializers.FileField()
+    caption = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    alt_text = serializers.CharField(max_length=300, required=False, allow_blank=True, default="")
+    is_primary_portrait = serializers.BooleanField(required=False, default=False)
+
+    def validate_file(self, value):
+        """Detect real type (image/video), enforce allow-list and size limits."""
+        detected = detect_media_kind(value)
+        if detected is None:
+            raise serializers.ValidationError(
+                "Unsupported or corrupt file. Allowed: JPEG, PNG, WebP images; MP4, WebM videos."
+            )
+        kind, mime = detected
+        if kind == "image":
+            limit = settings.MAX_IMAGE_UPLOAD_BYTES
+        else:
+            limit = settings.MAX_VIDEO_UPLOAD_BYTES
+        if value.size > limit:
+            raise serializers.ValidationError(
+                f"File too large. Maximum for {kind}s is {limit // (1024 * 1024)} MB."
+            )
+        self._kind = kind
+        self._mime = mime
+        return value
+
+    def validate(self, attrs: dict) -> dict:
+        """Derive media_type from the detected kind and check the portrait flag."""
+        kind = getattr(self, "_kind", None)
+        if attrs.get("is_primary_portrait") and kind != "image":
+            raise serializers.ValidationError(
+                {"is_primary_portrait": "Only images can be the primary portrait."}
+            )
+        if kind == "video":
+            attrs["media_type"] = MediaType.VIDEO
+        elif attrs.get("is_primary_portrait"):
+            attrs["media_type"] = MediaType.PORTRAIT
+        else:
+            attrs["media_type"] = MediaType.PHOTO
+        attrs["mime_type"] = self._mime
+        return attrs
 
 
 # --- Timeline ---
@@ -106,7 +169,7 @@ class QRCodeSerializer(serializers.ModelSerializer):
 class MemorialPageListSerializer(serializers.ModelSerializer):
     """Lightweight listing — no heavy nested data."""
 
-    owner = UserPublicSerializer(read_only=True)
+    owner = UserOwnerSerializer(read_only=True)
     primary_portrait = serializers.SerializerMethodField()
 
     class Meta:
@@ -114,14 +177,18 @@ class MemorialPageListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "slug", "page_type", "state",
             "first_name", "last_name", "birth_date", "death_date",
-            "owner", "primary_portrait", "created_at",
+            "owner", "primary_portrait", "moderation_note", "created_at",
         ]
-        read_only_fields = ["id", "slug", "state", "created_at"]
+        read_only_fields = ["id", "slug", "state", "moderation_note", "created_at"]
 
     def get_primary_portrait(self, obj: MemorialPage) -> str | None:
-        portrait = obj.media_files.filter(
-            media_type="portrait", is_primary_portrait=True
-        ).first()
+        prefetched = getattr(obj, "primary_portrait_files", None)
+        if prefetched is not None:
+            portrait = prefetched[0] if prefetched else None
+        else:
+            portrait = obj.media_files.filter(
+                media_type="portrait", is_primary_portrait=True
+            ).first()
         if portrait and portrait.file:
             request = self.context.get("request")
             if request:
@@ -170,20 +237,13 @@ class MemorialPageCreateSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data: dict) -> MemorialPage:
-        """Auto-generate unique slug and assign owner."""
-        from apps.qr.utils import generate_unique_slug
-
+        """Assign owner; the slug is generated by MemorialPage.save()."""
         request = self.context["request"]
-        page = MemorialPage.objects.create(
-            slug=generate_unique_slug(),
-            owner=request.user,
-            **validated_data,
-        )
-        return page
+        return MemorialPage.objects.create(owner=request.user, **validated_data)
 
 
 class MemorialPageUpdateSerializer(serializers.ModelSerializer):
-    """Update page content — triggers MODERATION reset if page was ACTIVE."""
+    """Update page content."""
 
     class Meta:
         model = MemorialPage
@@ -193,9 +253,8 @@ class MemorialPageUpdateSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance: MemorialPage, validated_data: dict) -> MemorialPage:
-        """Apply update and reset to MODERATION if page was ACTIVE."""
+        """Apply field updates. Re-moderation is decided by the view (owner only)."""
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        instance.mark_edited_by_owner()  # handles ACTIVE → MODERATION
         instance.save()
         return instance

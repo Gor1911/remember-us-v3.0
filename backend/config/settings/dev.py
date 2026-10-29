@@ -30,7 +30,9 @@ LOGGING = {
     },
 }
 
-# Disable rate limiting in dev
+# In-process cache so throttling works without Redis in dev/tests
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
 RATELIMIT_ENABLE = False
 
 # Allow all origins in dev

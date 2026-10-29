@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 
@@ -25,7 +25,7 @@ class UserManager(BaseUserManager):
         email: str,
         password: str | None = None,
         **extra_fields,
-    ) -> "User":
+    ) -> User:
         """Create and return a regular user."""
         if not email:
             raise ValueError("Email is required")
@@ -35,7 +35,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email: str, password: str, **extra_fields) -> "User":
+    def create_superuser(self, email: str, password: str, **extra_fields) -> User:
         """Create and return a superuser."""
         extra_fields.setdefault("role", UserRole.ADMIN)
         extra_fields.setdefault("is_staff", True)
@@ -63,7 +63,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
 
+    # Legal consent
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    terms_version = models.CharField(max_length=50, blank=True)
+
     # Timestamps
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_login = models.DateTimeField(null=True, blank=True)
@@ -122,7 +127,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Check if user can move pages to ACTIVE state."""
         return self.role == UserRole.ADMIN
 
-    def transfer_heir_rights(self, new_heir: "User") -> None:
+    def transfer_heir_rights(self, new_heir: User) -> None:
         """Transfer digital heir designation."""
         self.digital_heir = new_heir
         self.save(update_fields=["digital_heir", "updated_at"])
@@ -131,3 +136,29 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Update last_login timestamp."""
         self.last_login = timezone.now()
         self.save(update_fields=["last_login"])
+
+    def is_last_active_admin(self) -> bool:
+        """Return True if this user is the only active, non-deleted admin."""
+        if self.role != UserRole.ADMIN:
+            return False
+        return not (
+            User.objects.filter(role=UserRole.ADMIN, is_active=True, is_deleted=False)
+            .exclude(pk=self.pk)
+            .exists()
+        )
+
+    def delete_account(self) -> None:
+        """Soft-delete the account: remove owned pages/media and anonymize personal data."""
+        now = timezone.now()
+        with transaction.atomic():
+            for page in self.owned_pages.all():
+                for media in page.media_files.all():
+                    media.soft_delete()
+                page.soft_delete()
+            self.email = f"deleted-{self.id}@deleted.invalid"
+            self.display_name = ""
+            self.set_unusable_password()
+            self.is_active = False
+            self.is_deleted = True
+            self.deleted_at = now
+            self.save()

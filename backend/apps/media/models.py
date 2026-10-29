@@ -17,7 +17,7 @@ class MediaType(models.TextChoices):
     MODEL_3D = "model_3d", "3D Model"
 
 
-def upload_to(instance: "MediaFile", filename: str) -> str:
+def upload_to(instance: MediaFile, filename: str) -> str:
     """Generate upload path: media/<page_slug>/<type>/<filename>."""
     return f"media/{instance.page.slug}/{instance.media_type}/{filename}"
 

@@ -1,33 +1,35 @@
 """DRF viewsets — all responses wrapped in { success, data } envelope."""
 from __future__ import annotations
 
+import os
+
+from django.conf import settings
+from django.db import transaction
+from django.db.models import Prefetch, QuerySet
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from apps.media.models import MediaFile
-from apps.pages.models import MemorialPage, MilitaryAward, PageState, TimelineEntry
+from apps.pages.models import MemorialPage, PageState
 from apps.qr.models import QRCode
-from apps.users.models import User
 
 from .permissions import (
     CanAccessMemorialPage,
     IsAdmin,
-    IsOwnerOrAdmin,
-    IsPageOwner,
 )
 from .serializers import (
     MediaFileSerializer,
+    MediaUploadSerializer,
     MemorialPageCreateSerializer,
     MemorialPageDetailSerializer,
     MemorialPageListSerializer,
     MemorialPageUpdateSerializer,
-    MilitaryAwardSerializer,
     QRCodeSerializer,
-    TimelineEntrySerializer,
     UserCreateSerializer,
     UserDetailSerializer,
 )
@@ -47,10 +49,22 @@ class AuthViewSet(viewsets.ViewSet):
     """Registration endpoint. JWT tokens via simplejwt /api/v1/token/."""
 
     permission_classes = [AllowAny]
+    throttle_scope: str | None = None  # set per-route in urls.py
+
+    def get_permissions(self):
+        """Registration is open; every other auth action requires a login."""
+        if self.action == "register":
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     @action(detail=False, methods=["post"])
     def register(self, request: Request) -> Response:
         """Create a new user account."""
+        accepted = serializers.BooleanField(default=False).run_validation(
+            request.data.get("accept_terms", False)
+        )
+        if accepted is not True:
+            raise ValidationError("You must accept the Terms of Service and Privacy Policy.")
         serializer = UserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -64,6 +78,31 @@ class AuthViewSet(viewsets.ViewSet):
         """Return current user profile."""
         return success(UserDetailSerializer(request.user).data)
 
+    @action(detail=False, methods=["post"], url_path="me/delete", permission_classes=[IsAuthenticated])
+    def delete_account(self, request: Request) -> Response:
+        """Permanently deactivate and anonymize the current account (soft delete)."""
+        user = request.user
+        password = request.data.get("password")
+        if not isinstance(password, str) or not password or not user.check_password(password):
+            return Response(
+                {"success": False, "error": "Incorrect password.", "code": "INVALID_PASSWORD"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if user.is_last_active_admin():
+            return Response(
+                {
+                    "success": False,
+                    "error": (
+                        "You are the only administrator. Assign another administrator "
+                        "before deleting this account."
+                    ),
+                    "code": "LAST_ADMIN",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user.delete_account()
+        return success(None)
+
 
 # ---------------------------------------------------------------------------
 # Memorial Pages
@@ -72,6 +111,8 @@ class AuthViewSet(viewsets.ViewSet):
 
 class MemorialPageViewSet(viewsets.ViewSet):
     """CRUD + state transitions for memorial pages."""
+
+    throttle_scope: str | None = None  # set per-route in urls.py
 
     def get_permissions(self):
         if self.action in ["retrieve", "scan"]:
@@ -87,7 +128,7 @@ class MemorialPageViewSet(viewsets.ViewSet):
         else:
             qs = MemorialPage.objects.filter(owner=request.user)
         serializer = MemorialPageListSerializer(
-            qs, many=True, context={"request": request}
+            _with_list_relations(qs), many=True, context={"request": request}
         )
         return success(serializer.data)
 
@@ -129,6 +170,7 @@ class MemorialPageViewSet(viewsets.ViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        _flag_owner_edit(request, page)
         return success(
             MemorialPageDetailSerializer(page, context={"request": request}).data
         )
@@ -165,13 +207,18 @@ class MemorialPageViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"], url_path="moderation", permission_classes=[IsAdmin])
     def list_moderation(self, request: Request) -> Response:
         """List all pages pending moderation. Admin only."""
-        qs = MemorialPage.objects.filter(state=PageState.MODERATION)
+        qs = _with_list_relations(MemorialPage.objects.filter(state=PageState.MODERATION))
         serializer = MemorialPageListSerializer(qs, many=True, context={"request": request})
         return success(serializer.data)
 
-    @action(detail=True, methods=["get"], permission_classes=[AllowAny], url_path="scan")
+    @action(
+        detail=True,
+        methods=["get"],
+        permission_classes=[AllowAny],
+        url_path="scan",
+    )
     def scan(self, request: Request, slug: str | None = None) -> Response:
-        """Public QR scan endpoint — rate-limited in production."""
+        """Public QR scan endpoint — throttled with the `scan` scope."""
         page = get_object_or_404(MemorialPage, slug=slug, state=PageState.ACTIVE)
 
         # Log the scan
@@ -232,25 +279,29 @@ class MediaFileViewSet(viewsets.ViewSet):
     def create(self, request: Request, page_slug: str | None = None) -> Response:
         """Upload a new media file."""
         page = self._get_page(page_slug, request)
-        file_obj = request.FILES.get("file")
-        if not file_obj:
-            return Response(
-                {"success": False, "error": "No file provided.", "code": "NO_FILE"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        upload = MediaUploadSerializer(data=request.data)
+        upload.is_valid(raise_exception=True)
+        data = upload.validated_data
+        file_obj = data["file"]
 
-        media = MediaFile.objects.create(
-            page=page,
-            uploaded_by=request.user,
-            file=file_obj,
-            original_filename=file_obj.name,
-            file_size=file_obj.size,
-            mime_type=file_obj.content_type or "",
-            media_type=request.data.get("media_type", "photo"),
-            is_primary_portrait=request.data.get("is_primary_portrait", False),
-            caption=request.data.get("caption", ""),
-            alt_text=request.data.get("alt_text", ""),
-        )
+        with transaction.atomic():
+            if data["is_primary_portrait"]:
+                page.media_files.filter(is_primary_portrait=True).update(
+                    is_primary_portrait=False
+                )
+            media = MediaFile.objects.create(
+                page=page,
+                uploaded_by=request.user,
+                file=file_obj,
+                original_filename=os.path.basename(file_obj.name)[:255],
+                file_size=file_obj.size,
+                mime_type=data["mime_type"],
+                media_type=data["media_type"],
+                is_primary_portrait=data["is_primary_portrait"],
+                caption=data["caption"],
+                alt_text=data["alt_text"],
+            )
+        _flag_owner_edit(request, page)
         return success(
             MediaFileSerializer(media, context={"request": request}).data,
             status_code=status.HTTP_201_CREATED,
@@ -261,6 +312,7 @@ class MediaFileViewSet(viewsets.ViewSet):
         page = self._get_page(page_slug, request)
         media = get_object_or_404(MediaFile, id=pk, page=page)
         media.soft_delete()
+        _flag_owner_edit(request, page)
         return success(None, status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -282,8 +334,9 @@ class QRCodeViewSet(viewsets.ViewSet):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied()
 
-        from apps.qr.utils import generate_qr_image
         from django.core.files.base import ContentFile
+
+        from apps.qr.utils import generate_qr_image
 
         qr, created = QRCode.objects.get_or_create(page=page)
         png_bytes = generate_qr_image(page.memorial_url)
@@ -300,9 +353,33 @@ class QRCodeViewSet(viewsets.ViewSet):
 # ---------------------------------------------------------------------------
 
 
+def _flag_owner_edit(request: Request, page: MemorialPage) -> None:
+    """Send an ACTIVE page back to MODERATION, but only for non-admin (Owner) edits."""
+    if not request.user.is_admin:
+        page.mark_edited_by_owner()
+
+
+def _with_list_relations(qs: QuerySet) -> QuerySet:
+    """Avoid N+1 in list serializers: join owner, prefetch primary portraits."""
+    return qs.select_related("owner").prefetch_related(
+        Prefetch(
+            "media_files",
+            queryset=MediaFile.objects.filter(
+                media_type="portrait", is_primary_portrait=True
+            ),
+            to_attr="primary_portrait_files",
+        )
+    )
+
+
 def _get_client_ip(request: Request) -> str | None:
-    """Extract real client IP, respecting X-Forwarded-For."""
-    x_forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded:
-        return x_forwarded.split(",")[0].strip()
+    """Return the client IP.
+
+    X-Forwarded-For is honoured only when settings.TRUST_X_FORWARDED_FOR is on
+    (nginx appends the real peer, so the rightmost entry is the trustworthy one).
+    """
+    if getattr(settings, "TRUST_X_FORWARDED_FOR", False):
+        x_forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded:
+            return x_forwarded.split(",")[-1].strip()
     return request.META.get("REMOTE_ADDR")
