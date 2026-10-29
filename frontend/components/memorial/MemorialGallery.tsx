@@ -17,13 +17,12 @@ function mediaToPhotos(files: MediaFile[]): GalleryPhoto[] {
   return files
     .filter((f) => f.media_type === 'photo' || f.media_type === 'portrait')
     .sort((a, b) => a.order - b.order)
-    .map((f, i) => {
+    .map((f) => {
       return {
         id: f.id,
         src: f.file_url,
         alt: f.alt_text || f.caption || 'Memorial photo',
         caption: f.caption || undefined,
-        featured: i === 0,
       };
     });
 }
@@ -49,7 +48,7 @@ export const MemorialGallery = ({ mediaFiles }: MemorialGalleryProps) => {
   }, []);
 
   return (
-    <section className="border-t border-[#1A1614]/[0.08]">
+    <section className="border-t border-[#1A1614]/[0.08] bg-[#FAF8F5]">
       <div className="site-container py-16">
         <div ref={sectionRef} className="max-w-4xl mx-auto">
 
@@ -61,20 +60,20 @@ export const MemorialGallery = ({ mediaFiles }: MemorialGalleryProps) => {
               </span>
             </div>
             {photos.length > 0 && (
-              <span className="text-[#1A1614]/20 text-xs">{photos.length} photos</span>
+              <span className="text-[#8A7F74] text-xs">{photos.length} {photos.length === 1 ? 'photo' : 'photos'}</span>
             )}
           </div>
 
           {photos.length === 0 ? (
-            <div className="glass rounded-[32px] p-12 flex flex-col items-center gap-4">
+            <div className="bg-white border border-[#1A1614]/[0.08] rounded-[32px] p-12 flex flex-col items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-[#1A1614]/[0.04] border border-[#1A1614]/[0.08] flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                  <rect x="2" y="4" width="16" height="12" rx="2" stroke="#1A161430" strokeWidth="1.5" />
-                  <circle cx="7" cy="8.5" r="1.5" stroke="#1A161430" strokeWidth="1.5" />
-                  <path d="M2 13.5l4-4 3 3 3-3.5 4 4" stroke="#1A161430" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <rect x="2" y="4" width="16" height="12" rx="2" stroke="#8A7F74" strokeWidth="1.5" />
+                  <circle cx="7" cy="8.5" r="1.5" stroke="#8A7F74" strokeWidth="1.5" />
+                  <path d="M2 13.5l4-4 3 3 3-3.5 4 4" stroke="#8A7F74" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <p className="text-[#1A1614]/30 text-sm">No photos yet</p>
+              <p className="text-[#6B6560] text-sm">No photos yet</p>
             </div>
           ) : (
             <div className="mg-wrap">

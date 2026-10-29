@@ -28,7 +28,7 @@ const TimelineRow = ({ entry, isLast }: TimelineRowProps) => (
       <span className="text-[#8B0000] text-xs font-mono">{entry.year}</span>
       <p className="text-[#1A1614] font-medium text-sm mt-0.5">{entry.title}</p>
       {entry.description && (
-        <p className="text-[#1A1614]/40 text-sm leading-relaxed mt-0.5">{entry.description}</p>
+        <p className="text-[#6B6560] text-sm leading-relaxed mt-0.5">{entry.description}</p>
       )}
     </div>
   </div>
@@ -58,13 +58,13 @@ export const MemorialBio = ({ memorial }: MemorialBioProps) => {
   if (!hasContent) return null;
 
   return (
-    <section ref={sectionRef} className="border-t border-[#1A1614]/[0.08]">
+    <section ref={sectionRef} className="border-t border-[#1A1614]/[0.08] bg-[#F3F0EB]">
       <div className="site-container py-16">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 gap-8">
 
             {sortedEntries.length > 0 && (
-              <div className="bio-card glass rounded-[32px] p-8 flex flex-col gap-6">
+              <div className="bio-card bg-white border border-[#1A1614]/[0.08] rounded-[32px] p-8 flex flex-col gap-6">
                 <div className="flex items-center gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
                   <span className="text-[#8A7F74] text-[11px] uppercase tracking-[0.12em] font-medium">

@@ -23,6 +23,8 @@ export interface User {
   display_name: string;
   role: UserRole;
   created_at: string;
+  terms_accepted_at?: string | null;
+  terms_version?: string;
 }
 
 export interface Tokens {
@@ -37,6 +39,8 @@ export type PageType  = 'civilian' | 'military';
 
 export interface PageOwner {
   id: string;
+  /** Present only in authenticated list responses. */
+  email?: string;
   display_name: string;
   role: UserRole;
 }
@@ -87,6 +91,8 @@ export interface MemorialPageListItem {
   death_date: string | null;
   owner: PageOwner;
   primary_portrait: string | null;
+  /** Admin rejection note — present only if the API exposes it. */
+  moderation_note?: string;
   created_at: string;
 }
 
@@ -114,6 +120,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   display_name: string;
+  accept_terms: boolean;
 }
 
 export interface CreatePagePayload {

@@ -9,7 +9,6 @@ export interface GalleryPhoto {
   src: string;
   alt: string;
   caption?: string;
-  featured?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -42,23 +41,30 @@ export function GalleryLightbox({ photos }: Props) {
     return () => { document.body.style.overflow = ''; };
   }, [index]);
 
+  const count = photos.length;
+  const tileClass =
+    count === 1
+      ? 'w-full max-w-xl aspect-[4/3]'
+      : count !== 2 && count !== 4
+        ? 'w-[calc(50%-6px)] md:w-[calc(33.333%-8px)] aspect-[4/3]'
+        : 'w-[calc(50%-6px)] aspect-[4/3]';
+
   return (
     <>
       {/* ── Grid ─────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 auto-rows-[200px]">
+      <div className="flex flex-wrap justify-center gap-3">
         {photos.map((photo, i) => (
           <button
             key={photo.id}
             onClick={() => open(i)}
-            className={`relative overflow-hidden rounded-[20px] bg-[#1A1614]/[0.04] border border-[#1A1614]/[0.08] group cursor-zoom-in ${
-              photo.featured ? 'lg:col-span-2 lg:row-span-2' : ''
-            }`}
+            className={`relative overflow-hidden rounded-[20px] bg-[#EDE8E0] border border-[#1A1614]/[0.08] group cursor-zoom-in ${tileClass}`}
           >
             <Image
               src={photo.src}
               alt={photo.alt}
               fill
               unoptimized
+              sizes="(min-width: 1024px) 400px, 50vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
@@ -84,6 +90,7 @@ export function GalleryLightbox({ photos }: Props) {
                 alt={photos[index].alt}
                 fill
                 unoptimized
+                sizes="100vw"
                 className="object-contain"
                 priority
               />
@@ -110,7 +117,7 @@ export function GalleryLightbox({ photos }: Props) {
             className="absolute top-5 right-5 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.08] hover:bg-white/[0.16] text-white/60 hover:text-white transition-all"
             aria-label="Close"
           >
-            ✕
+            &times;
           </button>
 
           {/* Prev */}
@@ -148,7 +155,7 @@ export function GalleryLightbox({ photos }: Props) {
                       : 'border-white/10 opacity-40 hover:opacity-70'
                   }`}
                 >
-                  <Image src={p.src} alt="" fill unoptimized className="object-cover" />
+                  <Image src={p.src} alt="" fill unoptimized sizes="48px" className="object-cover" />
                 </button>
               ))}
             </div>

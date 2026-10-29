@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { auth } from '@/app/lib/api';
+import { auth, AUTH_EXPIRED_EVENT } from '@/app/lib/api';
 import type { User } from '@/app/lib/types';
 
 interface AuthCtx {
@@ -10,7 +10,7 @@ interface AuthCtx {
   error: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, display_name: string) => Promise<boolean>;
+  register: (email: string, password: string, display_name: string, accept_terms: boolean) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -43,7 +43,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- initial session bootstrap
   useEffect(() => { fetchMe(); }, [fetchMe]);
+
+  // Session could not be refreshed — drop the user so guards redirect
+  useEffect(() => {
+    const onExpired = () => { setUser(null); setLoading(false); };
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
@@ -58,10 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return true;
   }, [fetchMe]);
 
-  const register = useCallback(async (email: string, password: string, display_name: string) => {
+  const register = useCallback(async (email: string, password: string, display_name: string, accept_terms: boolean) => {
     setLoading(true);
     setError(null);
-    const res = await auth.register({ email, password, display_name });
+    const res = await auth.register({ email, password, display_name, accept_terms });
     if (!res.success) {
       setError(res.error ?? null);
       setLoading(false);

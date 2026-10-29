@@ -1,4 +1,6 @@
+import { API_BASE } from './config';
 import type {
+  ApiError,
   ApiResponse,
   Tokens,
   User,
@@ -11,7 +13,10 @@ import type {
   QrCode,
 } from './types';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api/v1';
+const BASE = API_BASE;
+
+/** Window event fired when the session can no longer be refreshed. */
+export const AUTH_EXPIRED_EVENT = 'auth:expired';
 
 // ─── Token storage (client-side only) ─────────────────────────────────────────
 
@@ -28,6 +33,80 @@ const storage = {
   },
 };
 
+// ─── Response parsing ─────────────────────────────────────────────────────────
+
+const fail = (error: string, code: string): ApiError => ({ success: false, error, code });
+
+function isEnvelope(value: unknown): value is { success: boolean } {
+  return typeof value === 'object' && value !== null && 'success' in value;
+}
+
+async function parse<T>(res: Response): Promise<ApiResponse<T>> {
+  if (res.status === 204) return { success: true, data: null as T };
+
+  let body: unknown = null;
+  try {
+    const text = await res.text();
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    return fail('Unexpected server response', 'SERVER_ERROR');
+  }
+
+  if (isEnvelope(body)) return body as ApiResponse<T>;
+  if (res.ok) return { success: true, data: body as T };
+
+  const detail = (body as { detail?: unknown } | null)?.detail;
+  const code = res.status === 429 ? 'RATE_LIMITED' : res.status >= 500 ? 'SERVER_ERROR' : 'REQUEST_FAILED';
+  return fail(typeof detail === 'string' ? detail : 'Request failed', code);
+}
+
+async function safeFetch(url: string, init: RequestInit): Promise<Response | null> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    return null;
+  }
+}
+
+const NETWORK_ERROR = fail('Network error — check your connection', 'NETWORK_ERROR');
+
+// ─── Token refresh (single-flight, handles rotating refresh tokens) ───────────
+
+let refreshing: Promise<boolean> | null = null;
+
+function refreshTokens(): Promise<boolean> {
+  if (refreshing) return refreshing;
+  const current = storage.refresh;
+  if (!current) return Promise.resolve(false);
+
+  refreshing = (async () => {
+    const res = await safeFetch(`${BASE}/auth/token/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: current }),
+    });
+    if (res?.ok) {
+      try {
+        const data = await res.json() as { access?: string; refresh?: string };
+        if (data.access) {
+          // ROTATE_REFRESH_TOKENS: store the new refresh, fall back to the old one
+          storage.set({ access: data.access, refresh: data.refresh ?? current });
+          return true;
+        }
+      } catch { /* fall through */ }
+    }
+    // Only a definitive auth rejection should end the session, not a network blip
+    if (res && res.status !== 401 && res.status !== 400 && res.status !== 403) return false;
+    if (res) {
+      storage.clear();
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
+    return false;
+  })().finally(() => { refreshing = null; });
+
+  return refreshing;
+}
+
 // ─── Core fetch with auto token-refresh ───────────────────────────────────────
 
 async function request<T>(
@@ -36,41 +115,32 @@ async function request<T>(
   retry = true,
 ): Promise<ApiResponse<T>> {
   const headers = new Headers(init.headers);
-  headers.set('Content-Type', 'application/json');
+  if (init.body !== undefined) headers.set('Content-Type', 'application/json');
   if (storage.access) headers.set('Authorization', `Bearer ${storage.access}`);
 
-  const res = await fetch(`${BASE}${path}`, { ...init, headers });
+  const res = await safeFetch(`${BASE}${path}`, { ...init, headers });
+  if (!res) return NETWORK_ERROR;
 
-  // 401 → try silent refresh once (simplejwt returns raw { access })
   if (res.status === 401 && retry && storage.refresh) {
-    const refreshed = await fetch(`${BASE}/auth/token/refresh/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh: storage.refresh }),
-    });
-    if (refreshed.ok) {
-      const data = await refreshed.json() as { access: string };
-      storage.set({ access: data.access, refresh: storage.refresh! });
-      return request<T>(path, init, false);
-    }
-    storage.clear();
+    if (await refreshTokens()) return request<T>(path, init, false);
   }
 
-  return res.json() as Promise<ApiResponse<T>>;
+  return parse<T>(res);
 }
 
 // ─── Multipart upload (no Content-Type — browser sets boundary) ───────────────
 
-async function upload<T>(path: string, form: FormData): Promise<ApiResponse<T>> {
-  const headers: HeadersInit = {};
-  if (storage.access) headers['Authorization'] = `Bearer ${storage.access}`;
+async function upload<T>(path: string, form: FormData, retry = true): Promise<ApiResponse<T>> {
+  const headers = new Headers();
+  if (storage.access) headers.set('Authorization', `Bearer ${storage.access}`);
 
-  const res = await fetch(`${BASE}${path}`, {
-    method: 'POST',
-    headers,
-    body: form,
-  });
-  return res.json() as Promise<ApiResponse<T>>;
+  const res = await safeFetch(`${BASE}${path}`, { method: 'POST', headers, body: form });
+  if (!res) return NETWORK_ERROR;
+
+  if (res.status === 401 && retry && storage.refresh) {
+    if (await refreshTokens()) return upload<T>(path, form, false);
+  }
+  return parse<T>(res);
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
@@ -81,30 +151,34 @@ export const auth = {
 
   login: async (email: string, password: string): Promise<ApiResponse<Tokens>> => {
     // simplejwt returns raw { access, refresh } — no envelope
-    const res = await fetch(`${BASE}/auth/token/`, {
+    const res = await safeFetch(`${BASE}/auth/token/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
-    if (res.ok && data.access) {
+    if (!res) return NETWORK_ERROR;
+
+    let data: { access?: string; refresh?: string; detail?: string } = {};
+    try { data = await res.json(); } catch { /* non-JSON body */ }
+
+    if (res.ok && data.access && data.refresh) {
       const tokens: Tokens = { access: data.access, refresh: data.refresh };
       storage.set(tokens);
       return { success: true, data: tokens };
     }
-    return { success: false, error: data.detail ?? 'Invalid credentials', code: 'AUTH_FAILED' };
+    if (res.status === 401) {
+      return fail(data.detail ?? 'Invalid email or password', 'AUTH_FAILED');
+    }
+    if (res.status === 429) return fail('Too many attempts, try again later', 'RATE_LIMITED');
+    return fail('Something went wrong, please try again', 'SERVER_ERROR');
   },
 
   me: () => request<User>('/auth/me/'),
 
-  logout: () => storage.clear(),
+  deleteAccount: (password: string) =>
+    request<null>('/auth/me/delete/', { method: 'POST', body: JSON.stringify({ password }) }),
 
-  refreshToken: storage.refresh
-    ? () => request<{ access: string }>('/auth/token/refresh/', {
-        method: 'POST',
-        body: JSON.stringify({ refresh: storage.refresh }),
-      })
-    : null,
+  logout: () => storage.clear(),
 };
 
 // ─── Memorial pages ────────────────────────────────────────────────────────────
@@ -112,6 +186,9 @@ export const auth = {
 export const pages = {
   list: () =>
     request<MemorialPageListItem[]>('/pages/'),
+
+  moderationList: () =>
+    request<MemorialPageListItem[]>('/pages/moderation/'),
 
   get: (slug: string) =>
     request<MemorialPageDetail>(`/pages/${slug}/`),

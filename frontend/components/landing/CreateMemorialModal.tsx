@@ -1,30 +1,28 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useModal } from '@/app/context/ModalContext';
 import { useAuth } from '@/app/hooks/useAuth';
+import { CloseIcon } from '@/components/landing/icons';
 
 type Tab = 'login' | 'register';
 
 export function CreateMemorialModal() {
-  const { isCreateOpen, closeCreate, authRedirectTo } = useModal();
+  const { isCreateOpen } = useModal();
+  return isCreateOpen ? <ModalForm /> : null;
+}
+
+function ModalForm() {
+  const { closeCreate, authRedirectTo } = useModal();
   const { login, register, loading, error } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-
-  // Reset form when modal opens
-  useEffect(() => {
-    if (isCreateOpen) {
-      setEmail('');
-      setPassword('');
-      setName('');
-      setTab('login');
-    }
-  }, [isCreateOpen]);
+  const [accepted, setAccepted] = useState(false);
 
   // Close on Escape
   useEffect(() => {
@@ -39,15 +37,13 @@ export function CreateMemorialModal() {
     if (tab === 'login') {
       ok = await login(email, password);
     } else {
-      ok = await register(email, password, name);
+      ok = await register(email, password, name, accepted);
     }
     if (ok) {
       closeCreate();
       router.push(authRedirectTo);
     }
-  }, [tab, email, password, name, login, register, closeCreate, router]);
-
-  if (!isCreateOpen) return null;
+  }, [tab, email, password, name, accepted, login, register, closeCreate, router, authRedirectTo]);
 
   return (
     <div
@@ -66,7 +62,7 @@ export function CreateMemorialModal() {
           className="absolute top-5 right-5 text-[#1A1614]/30 hover:text-[#1A1614] text-xl leading-none transition-colors"
           aria-label="Close"
         >
-          ✕
+          <CloseIcon className="w-5 h-5" />
         </button>
 
         {/* Logo */}
@@ -134,14 +130,32 @@ export function CreateMemorialModal() {
             />
           </div>
 
+          {tab === 'register' && (
+            <label className="flex items-start gap-3 cursor-pointer text-[#1A1614]/70 text-[15px] leading-snug">
+              <input
+                type="checkbox"
+                checked={accepted}
+                onChange={(e) => setAccepted(e.target.checked)}
+                required
+                className="mt-0.5 w-5 h-5 shrink-0 accent-[#8B0000] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]"
+              />
+              <span>
+                I agree to the{' '}
+                <Link href="/terms" target="_blank" rel="noopener" className="text-[#8B0000] underline underline-offset-2">Terms of Service</Link>
+                {' '}and{' '}
+                <Link href="/privacy" target="_blank" rel="noopener" className="text-[#8B0000] underline underline-offset-2">Privacy Policy</Link>
+              </span>
+            </label>
+          )}
+
           {error && (
             <p className="text-[#8B0000] text-sm text-center">{error}</p>
           )}
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3.5 bg-[#8B0000] hover:bg-[#A00000] disabled:opacity-50 text-white font-medium text-sm rounded-[14px] transition-colors duration-200"
+            disabled={loading || (tab === 'register' && !accepted)}
+            className="w-full py-3.5 bg-[#8B0000] hover:bg-[#A00000] disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm rounded-[14px] transition-colors duration-200"
           >
             {loading
               ? 'Please wait…'

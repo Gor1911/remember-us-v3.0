@@ -8,7 +8,6 @@ import type { MemorialPageDetail } from '@/app/lib/types';
 
 gsap.registerPlugin(ScrollTrigger);
 
-
 interface MemorialHeroProps {
   memorial: MemorialPageDetail;
 }
@@ -21,20 +20,30 @@ function formatDateRange(birthDate: string | null, deathDate: string | null): st
   return '';
 }
 
+function getInitials(fullName: string): string {
+  return fullName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
 export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
   const heroRef   = useRef<HTMLDivElement>(null);
   const nameRef   = useRef<HTMLDivElement>(null);
   const portrait  = memorial.media_files.find((f) => f.is_primary_portrait);
   const dateRange = formatDateRange(memorial.birth_date, memorial.death_date);
+  const isMilitary = memorial.page_type === 'military';
 
   // Portrait entrance
   useEffect(() => {
     if (!heroRef.current) return;
     const ctx = gsap.context(() => {
-      gsap.set('.portrait-card', { opacity: 0, y: 40 });
-      gsap.set('.veteran-badge', { opacity: 0, y: 8 });
-      gsap.to('.portrait-card', { opacity: 1, y: 0, duration: 1.0, ease: 'power2.out', delay: 0.3 });
-      gsap.to('.veteran-badge', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', delay: 0.9 });
+      gsap.fromTo('.portrait-card', { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 1.0, ease: 'power2.out', delay: 0.3 });
+      gsap.fromTo('.veteran-badge', { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', delay: 0.9 });
     }, heroRef);
     return () => ctx.revert();
   }, []);
@@ -44,11 +53,11 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
     if (!nameRef.current) return;
     const ctx = gsap.context(() => {
       gsap.from('.name-label, .name-h1, .name-meta', {
-        opacity: 0, y: 24, duration: 0.7, ease: 'power2.out', stagger: 0.1,
+        opacity: 0, y: 24, duration: 0.8, ease: 'power2.out', stagger: 0.1,
         scrollTrigger: { trigger: nameRef.current, start: 'top 90%', once: true },
       });
       gsap.from('.bio-para', {
-        opacity: 0, y: 24, duration: 0.8, ease: 'power2.out', stagger: 0.12,
+        opacity: 0, y: 24, duration: 0.8, ease: 'power2.out', stagger: 0.1,
         scrollTrigger: { trigger: '.bio-para', start: 'top 88%', once: true },
       });
     }, nameRef);
@@ -60,51 +69,56 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
       {/* ── Hero background + portrait ─────────────────────────────────── */}
       <div
         ref={heroRef}
-        className="relative h-[45vh] min-h-[320px] pt-16 bg-[#F3F0EB]"
+        className="relative w-full h-[45vh] min-h-[320px] pt-16 bg-[#F3F0EB]"
       >
-        {/* Arlington background */}
         <div className="absolute inset-0 overflow-hidden">
-          <Image
-            src="/images/arlington.jpg"
-            alt="Arlington National Cemetery"
-            fill priority
-            aria-hidden="true"
-            className="object-cover object-center opacity-35 blur-[2px] scale-[1.06]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#F3F0EB]/70 via-[#F3F0EB]/20 to-[#F3F0EB]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_50%,transparent_50%,#F3F0EB_100%)]" />
+          {isMilitary ? (
+            <>
+              <Image
+                src="/images/arlington.jpg"
+                alt=""
+                fill priority
+                sizes="100vw"
+                aria-hidden="true"
+                className="object-cover object-center opacity-35 blur-[2px] scale-[1.06]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-[#F3F0EB]/70 via-[#F3F0EB]/20 to-[#FAF8F5]" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-b from-[#F3F0EB] via-[#F6F3EE] to-[#FAF8F5]" />
+          )}
         </div>
 
         {/* Portrait — overflows below hero */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[35%] z-10">
-          <div
-            className="portrait-card relative w-72 h-[440px] md:w-72 md:h-[460px] rounded-[28px] overflow-hidden border border-[#1A1614]/10"
-            style={{ boxShadow: '0 0 0 8px rgba(139,0,0,0.08), 0 40px 80px rgba(26,22,20,0.15)', opacity: 0, transform: 'translateY(40px)' }}
-          >
+          <div className="portrait-card opacity-0 relative w-72 h-[440px] md:h-[460px] rounded-[28px] overflow-hidden border border-[#1A1614]/10 shadow-[0_0_0_8px_rgba(139,0,0,0.08),0_40px_80px_rgba(26,22,20,0.15)]">
             {portrait ? (
               <Image
                 src={portrait.file_url}
                 alt={portrait.alt_text || memorial.full_name}
                 fill priority
                 unoptimized
+                sizes="288px"
                 className="object-cover object-center"
               />
             ) : (
-              <div className="w-full h-full bg-[#1A1614]/[0.04] flex items-center justify-center">
-                <span className="text-[#1A1614]/20 text-4xl">👤</span>
+              <div className="w-full h-full bg-[#EDE8E0] flex flex-col items-center justify-center gap-3">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className="text-[#8A7F74]" aria-hidden="true">
+                  <circle cx="12" cy="8.5" r="3.5" />
+                  <path d="M4.5 20c.6-3.6 3.6-5.5 7.5-5.5s6.9 1.9 7.5 5.5" />
+                </svg>
+                <span className="text-[#6B6560] text-2xl font-semibold tracking-[0.12em]">
+                  {getInitials(memorial.full_name)}
+                </span>
               </div>
             )}
             <div className="absolute inset-0 rounded-[28px] ring-1 ring-inset ring-[#1A1614]/10" />
           </div>
 
-          {/* Badge */}
-          <div
-            className="veteran-badge absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#8B0000]/90 border border-[#8B0000]"
-            style={{ opacity: 0, transform: 'translateY(8px)' }}
-          >
+          <div className="veteran-badge opacity-0 absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#8B0000] border border-[#8B0000]">
             <span className="w-1.5 h-1.5 rounded-full bg-white/70" />
             <span className="text-white text-[10px] font-medium tracking-wider uppercase whitespace-nowrap">
-              {memorial.page_type === 'military' ? 'Veteran' : 'In Memory'}
+              {isMilitary ? 'Veteran' : 'In Memory'}
             </span>
           </div>
         </div>
@@ -127,19 +141,18 @@ export const MemorialHero = ({ memorial }: MemorialHeroProps) => {
         </h1>
 
         <div className="name-meta">
-          {memorial.page_type === 'military' && (memorial.military_rank || memorial.military_branch) && (
-            <p className="text-[#1A1614]/40 text-sm font-mono">
+          {isMilitary && (memorial.military_rank || memorial.military_branch) && (
+            <p className="text-[#6B6560] text-sm font-mono">
               {[memorial.military_rank, memorial.military_branch].filter(Boolean).join(' · ')}
             </p>
           )}
           {dateRange && (
-            <p className="text-[#1A1614]/25 text-sm mt-1 tracking-widest">{dateRange}</p>
+            <p className="text-[#8A7F74] text-sm mt-1 tracking-widest">{dateRange}</p>
           )}
         </div>
 
-        {/* Biography inline */}
         {memorial.biography && (
-          <div className="flex flex-col gap-4 text-[#1A1614]/55 text-base leading-relaxed max-w-2xl mx-auto mt-8 text-left">
+          <div className="flex flex-col gap-4 text-[#6B6560] text-base leading-relaxed max-w-2xl mx-auto mt-8 text-left">
             {memorial.biography.split('\n\n').filter(Boolean).map((para, i) => (
               <p key={i} className="bio-para">{para}</p>
             ))}

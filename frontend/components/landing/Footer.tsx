@@ -1,31 +1,27 @@
-'use client';
+import Link from 'next/link';
 
 const NAV_COLUMNS = [
   {
     title: 'Product',
     links: [
-      { label: 'How It Works',      href: '#how' },
-      { label: 'Memorial Examples', href: '#examples' },
-      { label: 'Pricing',           href: '#pricing' },
-      { label: 'QR Access',         href: '#qr' },
+      { label: 'How It Works', href: '/#how-it-works' },
+      { label: 'Features',     href: '/#features' },
+      { label: 'QR Access',    href: '/#qr-access' },
+      { label: 'FAQ',          href: '/#faq' },
     ],
   },
   {
-    title: 'Features',
+    title: 'Explore',
     links: [
-      { label: 'Living Portrait', href: '#portrait' },
-      { label: 'Awards in 3D',   href: '#medals' },
-      { label: 'Biography',      href: '#timeline' },
-      { label: 'Photo Gallery',  href: '#gallery' },
+      { label: 'Memorial Example', href: '/example' },
+      { label: 'My Memorials',     href: '/dashboard' },
     ],
   },
   {
-    title: 'Company',
+    title: 'Legal',
     links: [
-      { label: 'About Us',       href: '#about' },
-      { label: 'Contact',        href: '#contact' },
-      { label: 'Privacy Policy', href: '#privacy' },
-      { label: 'Terms of Use',   href: '#terms' },
+      { label: 'Terms of Service', href: '/terms' },
+      { label: 'Privacy Policy',   href: '/privacy' },
     ],
   },
 ];
@@ -33,64 +29,50 @@ const NAV_COLUMNS = [
 export function Footer() {
   return (
     <footer className="bg-[#F3F0EB] border-t border-[#1A1614]/[0.08]">
-      {/* Main block */}
       <div className="site-container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 md:gap-12">
+        <div className="grid grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] gap-x-6 gap-y-10 md:gap-12">
 
-          {/* Brand column */}
-          <div className="flex flex-col gap-5">
-            <a href="/" className="flex items-center gap-2.5 no-underline w-fit">
+          <div className="col-span-2 md:col-span-1 flex flex-col gap-5">
+            <Link href="/" className="flex items-center gap-2.5 no-underline w-fit">
               <span className="w-2 h-2 rounded-full bg-[#8B0000]" />
               <span className="text-[#1A1614] font-semibold text-[15px] tracking-tight">
                 Remember<span className="text-[#8A7F74] font-normal"> US</span>
               </span>
-            </a>
-            <p className="text-[#1A1614]/40 text-sm leading-relaxed max-w-[260px]">
+            </Link>
+            <p className="text-[#1A1614]/50 text-sm leading-relaxed max-w-[260px]">
               A premium private digital memorial. Access by QR code only.
               Built with respect for memory.
             </p>
             <div className="flex items-center gap-2 w-fit px-3 py-1.5 rounded-full border border-[#1A1614]/[0.10] bg-[#1A1614]/[0.03]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000] animate-pulse" />
-              <span className="text-[#8A7F74] text-[11px] tracking-widest uppercase font-medium">
-                USA · Premium
-              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
+              <span className="text-[#8A7F74] text-[11px] tracking-widest uppercase font-medium">USA · Premium</span>
             </div>
           </div>
 
-          {/* Nav columns */}
-          <div className="grid grid-cols-2 md:contents gap-8">
           {NAV_COLUMNS.map((col) => (
             <div key={col.title} className="flex flex-col gap-4">
-              <span className="text-[#1A1614]/30 text-[11px] uppercase tracking-widest font-medium">
-                {col.title}
-              </span>
+              <span className="text-[#1A1614]/40 text-[11px] uppercase tracking-widest font-medium">{col.title}</span>
               <ul className="flex flex-col gap-3 list-none">
                 {col.links.map(({ label, href }) => (
                   <li key={label}>
-                    <a
+                    <Link
                       href={href}
-                      className="text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
+                      className="text-[#1A1614]/60 hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
                     >
                       {label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
-          </div>
         </div>
       </div>
 
-      {/* Bottom bar */}
       <div className="border-t border-[#1A1614]/[0.06]">
         <div className="site-container py-6 flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-[#1A1614]/20 text-xs">
-            © {new Date().getFullYear()} Remember US. All rights reserved.
-          </p>
-          <p className="text-[#1A1614]/20 text-xs tracking-wide">
-            Designed for Eternity. Built in USA.
-          </p>
+          <p className="text-[#1A1614]/40 text-xs">© {new Date().getFullYear()} Remember US. All rights reserved.</p>
+          <p className="text-[#1A1614]/40 text-xs tracking-wide">Designed for Eternity. Built in USA.</p>
         </div>
       </div>
     </footer>

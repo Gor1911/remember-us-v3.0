@@ -1,10 +1,16 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useModal } from '@/app/context/ModalContext';
 import { useAuth } from '@/app/hooks/useAuth';
 
-const NAV_LINKS: { label: string; href: string }[] = [];
+const NAV_LINKS: { label: string; href: string }[] = [
+  { label: 'How It Works', href: '/#how-it-works' },
+  { label: 'Features',     href: '/#features' },
+  { label: 'FAQ',          href: '/#faq' },
+  { label: 'Example',      href: '/example' },
+];
 
 export function Header() {
   const [scrolled, setScrolled]   = useState(false);
@@ -59,23 +65,23 @@ export function Header() {
       <div className="site-container flex items-center justify-between h-16">
 
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2.5 no-underline">
+        <Link href="/" className="flex items-center gap-2.5 no-underline">
           <span className="w-2 h-2 rounded-full bg-[#8B0000]" />
           <span className="text-[#1A1614] font-semibold text-[15px] tracking-tight">
             Remember<span className="text-[#8A7F74] font-normal"> US</span>
           </span>
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map(({ label, href }) => (
-            <a
+            <Link
               key={href}
               href={href}
               className="text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
             >
               {label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -84,12 +90,12 @@ export function Header() {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <>
-                <a
+                <Link
                   href="/dashboard"
                   className="text-[#1A1614]/40 hover:text-[#1A1614] text-sm truncate max-w-[140px] transition-colors no-underline"
                 >
                   {displayName}
-                </a>
+                </Link>
                 <button
                   onClick={onLogout}
                   className="px-4 py-2 text-[#1A1614]/50 hover:text-[#1A1614] text-sm transition-colors duration-200"
@@ -138,25 +144,25 @@ export function Header() {
       <div className={`md:hidden transition-all duration-300 overflow-hidden ${menuOpen ? 'max-h-screen' : 'max-h-0'}`}>
         <nav className="site-container flex flex-col gap-1 pb-6 pt-2">
           {NAV_LINKS.map(({ label, href }) => (
-            <a
+            <Link
               key={href}
               href={href}
               onClick={closeMenu}
               className="text-[#1A1614]/60 hover:text-[#1A1614] text-base py-3 border-b border-[#1A1614]/[0.06] no-underline transition-colors"
             >
               {label}
-            </a>
+            </Link>
           ))}
 
           {!loading && isAuthenticated && (
             <div className="py-3 border-b border-[#1A1614]/[0.06] flex items-center justify-between">
-              <a
+              <Link
                 href="/dashboard"
                 onClick={closeMenu}
                 className="text-[#1A1614]/60 hover:text-[#1A1614] text-sm truncate no-underline transition-colors"
               >
                 {displayName} · My Memorials
-              </a>
+              </Link>
               <button
                 onClick={onLogout}
                 className="text-[#1A1614]/40 hover:text-[#1A1614] text-sm transition-colors shrink-0"
