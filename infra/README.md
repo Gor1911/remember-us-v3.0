@@ -18,9 +18,9 @@ Push to `main` → CI (ruff, pytest, lint, tsc, build) → images pushed to GHCR
    ssh root@<VPS_IP> "nano /opt/remember-us/infra/.env.prod"   # fill CHANGE_ME / YOUR_VPS_IP
    ```
 3. GitHub → Settings → Secrets and variables → Actions:
-   - Secrets: `VPS_HOST` (IP), `VPS_USER` (`deploy`), `VPS_SSH_KEY` (contents of `remember-us-ci`),
-     `VPS_KNOWN_HOSTS` (output of `ssh-keyscan <VPS_IP>`)
+   - Secrets: `VPS_HOST` (IP), `VPS_USER` (`deploy`), `VPS_SSH_KEY` (contents of `remember-us-ci`)
    - Variables: `PUBLIC_HOST` (IP now, domain later — baked into the frontend bundle)
+   - Host key: `ssh-keyscan <VPS_IP> | grep -v "^#" >> infra/known_hosts` and commit (public, not a secret)
 4. Push to `main` (or Actions → CI → Run workflow on `main`). Then create the admin once:
    ```bash
    ssh deploy@<VPS_IP>
