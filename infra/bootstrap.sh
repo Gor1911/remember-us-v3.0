@@ -27,6 +27,13 @@ fi
 systemctl enable --now docker
 docker compose version > /dev/null
 
+# Docker Hub is flaky from some hosting regions — pull base images through Google's mirror
+# (dockerd falls back to Docker Hub itself if the mirror is unavailable).
+if [ ! -f /etc/docker/daemon.json ]; then
+    echo '{ "registry-mirrors": ["https://mirror.gcr.io"] }' > /etc/docker/daemon.json
+    systemctl restart docker
+fi
+
 echo "==> Swap (Next.js/Postgres headroom on small VPS)..."
 SWAP_MB=$(free -m | awk '/^Swap:/ {print $2}')
 if [ "$SWAP_MB" -lt 1500 ] && [ ! -f /swapfile-remember-us ]; then
