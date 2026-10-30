@@ -116,24 +116,35 @@ jobs:
       - uses: actions/checkout@v4
       - name: SSH setup
         env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
         run: |
+          # Secrets pasted from Windows often carry stray whitespace / CRLF — normalise them.
+          host=$(printf '%s' "$VPS_HOST" | tr -d '[:space:]')
+          user=$(printf '%s' "$VPS_USER" | tr -d '[:space:]')
+          for v in host user; do
+            if [ -z "${!v}" ]; then echo "::error::Secret VPS_${v^^} is empty or not set"; exit 1; fi
+          done
+          case "$host$user" in *@*|*/*|*:*) echo "::error::VPS_HOST must be a bare IP/hostname and VPS_USER a bare user name"; exit 1;; esac
           install -d -m 700 ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null || { echo "::error::VPS_SSH_KEY is not a valid private key"; exit 1; }
+          printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+          grep -q "$host" ~/.ssh/known_hosts || { echo "::error::VPS_KNOWN_HOSTS has no entry for $host"; exit 1; }
+          printf 'Host vps\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id_ed25519\n  BatchMode yes\n  ConnectTimeout 20\n' \
+            "$host" "$user" > ~/.ssh/config
+          ssh vps true
       - name: Upload infra files
-        env:
-          TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
         run: |
           scp -r infra/docker-compose.yml infra/deploy.sh infra/backup.sh infra/.env.prod.example infra/nginx \
-            "$TARGET:/opt/remember-us/infra/"
+            vps:/opt/remember-us/infra/
       - name: Release
         env:
-          TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          printf '%s' "$GHCR_TOKEN" | ssh "$TARGET" "docker login ghcr.io -u ${{ github.actor }} --password-stdin"
-          ssh "$TARGET" "cd /opt/remember-us/infra && bash deploy.sh ${{ github.sha }}"
-          ssh "$TARGET" "docker logout ghcr.io"
+          printf '%s' "$GHCR_TOKEN" | ssh vps "docker login ghcr.io -u ${{ github.actor }} --password-stdin"
+          ssh vps "cd /opt/remember-us/infra && bash deploy.sh ${{ github.sha }}"
+          ssh vps "docker logout ghcr.io"
