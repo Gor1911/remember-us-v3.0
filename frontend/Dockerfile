@@ -7,8 +7,9 @@ RUN npm ci
 
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL=http://188.214.107.148/api/v1
-ARG NEXT_PUBLIC_MEDIA_HOST=188.214.107.148
+# Public URLs are baked into the bundle at build time — CI passes them from vars.PUBLIC_HOST.
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_MEDIA_HOST
 ARG BACKEND_INTERNAL_URL=http://backend:8000
 ARG BACKEND_MEDIA_HOST=backend
 ARG BACKEND_MEDIA_PORT=8000
@@ -19,6 +20,7 @@ ENV BACKEND_INTERNAL_URL=$BACKEND_INTERNAL_URL
 ENV BACKEND_MEDIA_HOST=$BACKEND_MEDIA_HOST
 ENV BACKEND_MEDIA_PORT=$BACKEND_MEDIA_PORT
 
+RUN test -n "$NEXT_PUBLIC_API_URL" || (echo "NEXT_PUBLIC_API_URL build arg is required" >&2 && exit 1)
 RUN npm run build
 
 # ── Runner ────────────────────────────────────────────────────────────────────

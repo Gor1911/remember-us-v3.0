@@ -47,6 +47,7 @@ cd backend && ruff check .                  # lint
   - e.g. `[backend] fix: qr hash collision`
 - Run tests before push
 - CI (`.github/workflows/ci.yml`) runs ruff, migration check and pytest for the backend, and lint, type check and build for the frontend
+- Push to `main` = deploy to prod: after green CI, images go to GHCR and `infra/deploy.sh` runs on the VPS (see `infra/README.md`)
 
 ## See Also
 - @.claude/rules/frontend.md — Next.js/Tailwind/GSAP rules

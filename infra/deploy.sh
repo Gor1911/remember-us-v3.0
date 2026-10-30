@@ -1,72 +1,58 @@
 #!/bin/bash
-# First-time deploy script for Remember US v3.0
-# Run on VPS: bash deploy.sh
-set -e
+# Release script for Remember US v3.0 — runs on the VPS.
+# Called by CI after images are pushed to GHCR; also usable by hand for rollback:
+#   cd /opt/remember-us/infra && bash deploy.sh <commit-sha>
+set -euo pipefail
 
-REPO="https://github.com/Gor1911/remember-us-v3.0.git"
-APP_DIR="/opt/remember-us"
+cd "$(dirname "$0")"
 
-echo "==> Checking Docker..."
-if ! command -v docker &> /dev/null; then
-    echo "Installing Docker..."
-    curl -fsSL https://get.docker.com | sh
-    systemctl enable docker
-    systemctl start docker
-fi
-
-if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
-    echo "Installing Docker Compose plugin..."
-    apt-get update -qq && apt-get install -y docker-compose-plugin
-fi
-
-echo "==> Cloning / updating repo..."
-if [ -d "$APP_DIR" ]; then
-    git -C "$APP_DIR" pull
-else
-    git clone "$REPO" "$APP_DIR"
-fi
-
-cd "$APP_DIR/infra"
-
-echo "==> Checking .env.prod..."
-if [ ! -f .env.prod ]; then
-    cp .env.prod.example .env.prod
-    echo ""
-    echo "  [!] .env.prod created from example."
-    echo "  [!] Edit /opt/remember-us/infra/.env.prod before continuing:"
-    echo "      - Set POSTGRES_PASSWORD"
-    echo "      - Set SECRET_KEY (50 random chars)"
-    echo ""
-    echo "  Run after editing:  cd /opt/remember-us/infra && bash deploy.sh"
-    exit 0
-fi
-
+export IMAGE_TAG="${1:-latest}"
 DC="docker compose --env-file .env.prod"
+BACKUP_DIR="/opt/remember-us/backups"
 
-echo "==> Building and starting containers..."
-$DC down --remove-orphans
-$DC build --no-cache
-$DC up -d
+if [ ! -f .env.prod ]; then
+    echo "[!] infra/.env.prod is missing — run bootstrap.sh first." >&2
+    exit 1
+fi
 
-echo "==> Waiting for backend to be ready..."
-sleep 10
+echo "==> Deploying image tag: $IMAGE_TAG"
 
-echo "==> Creating Django superuser (if not exists)..."
-$DC exec -T backend python manage.py shell -c "
-from apps.users.models import User
-if not User.objects.filter(email='admin@remember-us.local').exists():
-    u = User.objects.create_superuser('admin@remember-us.local', 'Admin1234!')
-    print('Superuser created: admin@remember-us.local / Admin1234!')
-else:
-    print('Superuser already exists.')
-"
+mkdir -p "$BACKUP_DIR"
+if [ -n "$($DC ps --status running -q db)" ]; then
+    echo "==> Pre-deploy database backup..."
+    $DC exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+        | gzip > "$BACKUP_DIR/pre-deploy-$(date +%Y%m%d-%H%M%S)-${IMAGE_TAG:0:7}.sql.gz"
+    # Keep the 10 most recent pre-deploy dumps
+    ls -1t "$BACKUP_DIR"/pre-deploy-*.sql.gz 2>/dev/null | tail -n +11 | xargs -r rm -f
+else
+    echo "==> Database not running yet (first deploy) — skipping backup."
+fi
 
-echo ""
-echo "======================================"
-echo "  Deploy complete!"
-echo "  Site:  http://188.214.107.148"
-echo "  Admin: http://188.214.107.148/admin"
-echo "  Login: admin@remember-us.local"
-echo "  Pass:  Admin1234!"
-echo "  (change password after first login)"
-echo "======================================"
+echo "==> Pulling images..."
+$DC pull backend celery frontend
+
+echo "==> Applying migrations..."
+$DC run --rm backend python manage.py migrate --noinput
+
+echo "==> Starting containers..."
+$DC up -d --no-build --remove-orphans
+
+echo "==> Smoke check..."
+for url in http://localhost/ http://localhost/admin/login/; do
+    ok=""
+    for _ in $(seq 1 30); do
+        if curl -fsS -o /dev/null "$url"; then ok=1; break; fi
+        sleep 2
+    done
+    if [ -z "$ok" ]; then
+        echo "[!] $url did not respond with 2xx within 60s" >&2
+        $DC ps
+        $DC logs --tail 50 backend frontend nginx
+        exit 1
+    fi
+    echo "    OK  $url"
+done
+
+docker image prune -f > /dev/null
+
+echo "==> Deploy of $IMAGE_TAG complete."

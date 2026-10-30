@@ -4,10 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a main run midway — it may be deploying.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -55,3 +57,83 @@ jobs:
       - run: npm run lint
       - run: npx tsc --noEmit
       - run: npm run build
+
+  images:
+    name: Images (${{ matrix.service }})
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image name
+        env:
+          PUBLIC_HOST: ${{ vars.PUBLIC_HOST }}
+        run: |
+          if [ -z "$PUBLIC_HOST" ]; then
+            echo "::error::Repository variable PUBLIC_HOST (VPS IP or domain) is not set"
+            exit 1
+          fi
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/remember-us-${{ matrix.service }}" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          # Links the GHCR package to this repo so the deploy job's token can pull it.
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://${{ vars.PUBLIC_HOST }}/api/v1
+            NEXT_PUBLIC_MEDIA_HOST=${{ vars.PUBLIC_HOST }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  deploy:
+    name: Deploy to VPS
+    needs: images
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: SSH setup
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Upload infra files
+        env:
+          TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+        run: |
+          scp -r infra/docker-compose.yml infra/deploy.sh infra/backup.sh infra/.env.prod.example infra/nginx \
+            "$TARGET:/opt/remember-us/infra/"
+      - name: Release
+        env:
+          TARGET: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh "$TARGET" "docker login ghcr.io -u ${{ github.actor }} --password-stdin"
+          ssh "$TARGET" "cd /opt/remember-us/infra && bash deploy.sh ${{ github.sha }}"
+          ssh "$TARGET" "docker logout ghcr.io"

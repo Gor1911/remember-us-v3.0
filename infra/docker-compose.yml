@@ -28,6 +28,7 @@ services:
       retries: 5
 
   backend:
+    image: ${IMAGE_PREFIX:-ghcr.io/gor1911/remember-us}-backend:${IMAGE_TAG:-latest}
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -43,15 +44,16 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Migrations run once per release from deploy.sh, before containers are swapped.
     command:
       - sh
       - -c
       - |
-        python manage.py migrate --noinput &&
         python manage.py collectstatic --noinput &&
-        gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile -
+        gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-2} --timeout 120 --access-logfile -
 
   celery:
+    image: ${IMAGE_PREFIX:-ghcr.io/gor1911/remember-us}-backend:${IMAGE_TAG:-latest}
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -66,15 +68,16 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: celery -A config worker --loglevel=info --concurrency=2
+    command: celery -A config worker --loglevel=info --concurrency=${CELERY_CONCURRENCY:-1}
 
   frontend:
+    image: ${IMAGE_PREFIX:-ghcr.io/gor1911/remember-us}-frontend:${IMAGE_TAG:-latest}
     build:
       context: ../frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://188.214.107.148/api/v1
-        NEXT_PUBLIC_MEDIA_HOST: "188.214.107.148"
+        NEXT_PUBLIC_API_URL: http://${PUBLIC_HOST:-localhost}/api/v1
+        NEXT_PUBLIC_MEDIA_HOST: ${PUBLIC_HOST:-localhost}
         BACKEND_INTERNAL_URL: http://backend:8000
         BACKEND_MEDIA_HOST: backend
         BACKEND_MEDIA_PORT: "8000"
