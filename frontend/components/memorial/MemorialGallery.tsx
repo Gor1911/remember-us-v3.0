@@ -15,7 +15,8 @@ interface MemorialGalleryProps {
 
 function mediaToPhotos(files: MediaFile[]): GalleryPhoto[] {
   return files
-    .filter((f) => f.media_type === 'photo' || f.media_type === 'portrait')
+    // The main photo is shown in the hero, not repeated in the gallery.
+    .filter((f) => f.media_type === 'photo')
     .sort((a, b) => a.order - b.order)
     .map((f) => {
       return {

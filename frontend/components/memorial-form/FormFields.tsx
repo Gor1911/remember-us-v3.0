@@ -1,22 +1,26 @@
 import type { ReactNode } from 'react';
 
 const CONTROL =
-  'w-full bg-white border border-[#1A1614]/[0.12] rounded-[12px] px-4 py-3 text-[#1A1614] text-sm placeholder:text-[#8A7F74] outline-none focus:border-[#8B0000]/50 transition-colors [color-scheme:light]';
+  'w-full bg-white border border-[#1A1614]/[0.12] rounded-[12px] px-4 py-3 text-[#1A1614] text-sm placeholder:text-[#8A7F74] outline-none focus:border-[#8B0000]/50 aria-[invalid=true]:border-[#8B0000]/60 transition-colors [color-scheme:light]';
 
 interface FieldProps {
   label: string;
   htmlFor?: string;
   hint?: string;
+  /** Validation message; replaces the hint while present. */
+  error?: string;
   children: ReactNode;
 }
 
-export const Field = ({ label, htmlFor, hint, children }: FieldProps) => (
+export const Field = ({ label, htmlFor, hint, error, children }: FieldProps) => (
   <div className="flex flex-col gap-1.5">
     <label htmlFor={htmlFor} className="text-[#6B6560] text-[11px] uppercase tracking-widest font-medium">
       {label}
     </label>
     {children}
-    {hint && <p className="text-muted text-xs">{hint}</p>}
+    {error
+      ? <p role="alert" className="text-[#8B0000] text-xs">{error}</p>
+      : hint && <p className="text-muted text-xs">{hint}</p>}
   </div>
 );
 
@@ -27,11 +31,15 @@ interface InputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   required?: boolean;
+  min?: string;
+  max?: string;
+  invalid?: boolean;
 }
 
-export const Input = ({ id, type = 'text', value, onChange, placeholder, required }: InputProps) => (
+export const Input = ({ id, type = 'text', value, onChange, placeholder, required, min, max, invalid }: InputProps) => (
   <input
     id={id} type={type} value={value} placeholder={placeholder} required={required}
+    min={min || undefined} max={max || undefined} aria-invalid={invalid || undefined}
     onChange={(e) => onChange(e.target.value)}
     className={CONTROL}
   />

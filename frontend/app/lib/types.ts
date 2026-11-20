@@ -138,7 +138,8 @@ export interface CreatePagePayload {
   page_type: PageType;
   first_name: string;
   last_name: string;
-  biography?: string;
+  /** Required on create, at least 20 characters after trimming. */
+  biography: string;
   birth_date?: string;
   death_date?: string;
   military_rank?: string;

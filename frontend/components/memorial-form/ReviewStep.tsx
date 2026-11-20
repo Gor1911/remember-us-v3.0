@@ -1,4 +1,4 @@
-import { TypeIcon } from '@/components/dashboard/Icons';
+import { PersonIcon, TypeIcon } from '@/components/dashboard/Icons';
 import type { FormState, PhotoEntry } from './formTypes';
 
 interface ReviewRowProps {
@@ -15,21 +15,34 @@ const ReviewRow = ({ label, children }: ReviewRowProps) => (
 
 interface ReviewStepProps {
   form: FormState;
+  portrait: PhotoEntry | null;
   photos: PhotoEntry[];
   apiError: string;
   uploadStatus: string;
 }
 
-export const ReviewStep = ({ form, photos, apiError, uploadStatus }: ReviewStepProps) => {
+export const ReviewStep = ({ form, portrait, photos, apiError, uploadStatus }: ReviewStepProps) => {
   const isMilitary = form.page_type === 'military';
   return (
     <div className="glass rounded-[32px] p-6 md:p-10 flex flex-col gap-6">
+      <div className="flex items-center gap-5">
+        <div className="w-20 aspect-[4/5] shrink-0 rounded-[16px] overflow-hidden bg-[#F3F0EB] border border-[#1A1614]/[0.08] flex items-center justify-center text-[#8A7F74]">
+          {portrait
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={portrait.preview} alt="Main photo" className="w-full h-full object-cover" />
+            : <PersonIcon className="w-6 h-6" />}
+        </div>
+        <div className="min-w-0">
+          <p className="text-[#1A1614] font-bold text-xl tracking-tight truncate">{form.first_name} {form.last_name}</p>
+          <p className="text-muted text-xs mt-1">{portrait ? 'Main photo' : 'No main photo — you can add it on the first step'}</p>
+        </div>
+      </div>
+      <div className="h-px bg-[#1A1614]/[0.08]" />
       <ReviewRow label="Type">
         <span className="inline-flex items-center gap-1.5 capitalize">
           <TypeIcon type={form.page_type} className="w-3.5 h-3.5" /> {form.page_type}
         </span>
       </ReviewRow>
-      <ReviewRow label="Name">{form.first_name} {form.last_name}</ReviewRow>
       {form.birth_date && <ReviewRow label="Born">{form.birth_date}</ReviewRow>}
       {form.death_date && <ReviewRow label="Passed">{form.death_date}</ReviewRow>}
       {isMilitary && form.military_rank && <ReviewRow label="Rank">{form.military_rank}</ReviewRow>}
@@ -37,7 +50,7 @@ export const ReviewStep = ({ form, photos, apiError, uploadStatus }: ReviewStepP
       {isMilitary && form.service_start && (
         <ReviewRow label="Service">{form.service_start} — {form.service_end || 'present'}</ReviewRow>
       )}
-      {photos.length > 0 && <ReviewRow label="Photos">{photos.length} selected</ReviewRow>}
+      {photos.length > 0 && <ReviewRow label="Gallery">{photos.length} photo{photos.length > 1 ? 's' : ''}</ReviewRow>}
 
       {form.biography && (
         <div className="flex flex-col gap-1.5">
