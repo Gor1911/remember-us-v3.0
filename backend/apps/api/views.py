@@ -379,10 +379,18 @@ class MediaFileViewSet(viewsets.ViewSet):
         file_obj = data["file"]
 
         with transaction.atomic():
+            # Serialize concurrent uploads to one page so the limit check holds.
+            MemorialPage.objects.select_for_update().filter(pk=page.pk).first()
             if data["is_primary_portrait"]:
-                page.media_files.filter(is_primary_portrait=True).update(
-                    is_primary_portrait=False
-                )
+                # The main photo lives outside the gallery: a new one replaces the old.
+                for old in page.media_files.filter(is_primary_portrait=True):
+                    old.soft_delete()
+            elif data["media_type"] == MediaType.PHOTO:
+                limit = settings.MAX_GALLERY_PHOTOS
+                if page.media_files.filter(media_type=MediaType.PHOTO).count() >= limit:
+                    raise ValidationError(
+                        {"file": f"The gallery is full: up to {limit} photos per memorial."}
+                    )
             media = MediaFile.objects.create(
                 page=page,
                 uploaded_by=request.user,

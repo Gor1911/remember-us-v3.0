@@ -281,13 +281,13 @@ class TestAdminEdit:
     def test_admin_patch_keeps_active(self, api_client, admin_user, active_page):
         api_client.force_authenticate(user=admin_user)
         response = api_client.patch(
-            f"/api/v1/pages/{active_page.slug}/", {"biography": "Admin fix"}
+            f"/api/v1/pages/{active_page.slug}/", {"biography": "Admin fix of a typo in the story."}
         )
         assert response.status_code == 200
         assert response.data["data"]["state"] == "active"
         active_page.refresh_from_db()
         assert active_page.state == PageState.ACTIVE
-        assert active_page.biography == "Admin fix"
+        assert active_page.biography == "Admin fix of a typo in the story."
 
 
 # --- Draft retrieval matrix ---
@@ -345,7 +345,10 @@ class TestListQueries:
 def test_create_then_submit_flow(api_client, owner):
     """New pages start as draft and the owner can submit them."""
     api_client.force_authenticate(user=owner)
-    created = api_client.post("/api/v1/pages/", {"first_name": "N", "last_name": "P"})
+    created = api_client.post(
+        "/api/v1/pages/",
+        {"first_name": "N", "last_name": "P", "biography": "A life worth remembering."},
+    )
     assert created.data["data"]["state"] == "draft"
     slug = created.data["data"]["slug"]
     assert api_client.post(f"/api/v1/pages/{slug}/submit/").status_code == 402

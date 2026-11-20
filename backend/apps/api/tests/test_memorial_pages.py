@@ -91,7 +91,10 @@ class TestMemorialPageCreate:
         api_client.force_authenticate(user=owner)
         response = api_client.post(
             "/api/v1/pages/",
-            {"first_name": "New", "last_name": "Person", "page_type": "civilian"},
+            {
+                "first_name": "New", "last_name": "Person", "page_type": "civilian",
+                "biography": "A kind teacher who loved music.",
+            },
         )
         assert response.status_code == 201
         assert response.data["data"]["state"] == "draft"

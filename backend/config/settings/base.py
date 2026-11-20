@@ -156,6 +156,8 @@ REST_FRAMEWORK = {
 MAX_IMAGE_UPLOAD_BYTES = 15 * 1024 * 1024
 MAX_VIDEO_UPLOAD_BYTES = 200 * 1024 * 1024
 MAX_LIVING_PORTRAIT_BYTES = 100 * 1024 * 1024
+MAX_GALLERY_PHOTOS = 10  # per page; the primary portrait is not counted
+MIN_BIOGRAPHY_LENGTH = 20  # characters, after trimming whitespace
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # non-file request bodies
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # larger files spool to disk
 

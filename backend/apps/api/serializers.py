@@ -278,8 +278,44 @@ class MemorialPageDetailSerializer(serializers.ModelSerializer):
         return data
 
 
-class MemorialPageCreateSerializer(serializers.ModelSerializer):
+_DATE_PAIRS: tuple[tuple[str, str, str], ...] = (
+    ("birth_date", "death_date", "Date of passing cannot be earlier than date of birth."),
+    ("service_start", "service_end", "Service end cannot be earlier than service start."),
+)
+
+
+class MemorialPageContentMixin:
+    """Content rules shared by create and update: biography length, date order."""
+
+    instance: MemorialPage | None
+
+    def validate_biography(self, value: str) -> str:
+        """Trim and require a meaningful biography (same rule as the create form)."""
+        value = (value or "").strip()
+        minimum = settings.MIN_BIOGRAPHY_LENGTH
+        if len(value) < minimum:
+            raise serializers.ValidationError(
+                f"Biography must be at least {minimum} characters."
+            )
+        return value
+
+    def validate(self, attrs: dict) -> dict:
+        """Reject date ranges that end before they start (merging stored values on update)."""
+        errors: dict[str, str] = {}
+        for start_field, end_field, message in _DATE_PAIRS:
+            start = attrs.get(start_field, getattr(self.instance, start_field, None))
+            end = attrs.get(end_field, getattr(self.instance, end_field, None))
+            if start and end and end < start:
+                errors[end_field] = message
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
+
+class MemorialPageCreateSerializer(MemorialPageContentMixin, serializers.ModelSerializer):
     """Create a new memorial page — slug is auto-generated."""
+
+    biography = serializers.CharField(trim_whitespace=False)
 
     class Meta:
         model = MemorialPage
@@ -295,7 +331,7 @@ class MemorialPageCreateSerializer(serializers.ModelSerializer):
         return MemorialPage.objects.create(owner=request.user, **validated_data)
 
 
-class MemorialPageUpdateSerializer(serializers.ModelSerializer):
+class MemorialPageUpdateSerializer(MemorialPageContentMixin, serializers.ModelSerializer):
     """Update page content."""
 
     class Meta:
