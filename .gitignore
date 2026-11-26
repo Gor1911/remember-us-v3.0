@@ -1,6 +1,9 @@
 # Claude Code internal
 .claude/
 
+# Hallmark design audits (screenshots, lint reports)
+.hallmark/
+
 # Dependencies
 node_modules/
 frontend/node_modules/

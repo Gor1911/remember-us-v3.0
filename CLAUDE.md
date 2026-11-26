@@ -1,7 +1,7 @@
 # Remember US v3.0 — Development Rules
 
 ## Project Overview
-Premium closed digital memorial. Light cream aesthetic, Apple-style design.
+Premium closed digital memorial. "Warm stone" design system: ivory and sand chapters, dark warm footer, duotone icons (see `.claude/rules/design.md`).
 No public access. QR-only entry. Read-only for guests.
 
 ## Structure
@@ -29,7 +29,7 @@ cd backend && ruff check .                  # lint
 ```
 
 ## Core Rules (ALWAYS follow)
-- Light cream theme only — one theme across all pages, no dark mode, no mixed themes
+- Follow the warm stone design system in `.claude/rules/design.md` — legacy cream pages are being migrated, don't add new cream UI
 - No public indexing — noindex on all pages except landing
 - No social features — no comments, likes, reactions
 - Admin approval required before any page goes live
