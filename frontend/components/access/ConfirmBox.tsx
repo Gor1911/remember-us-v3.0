@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { BTN_DANGER, BTN_SECONDARY } from '@/components/dashboard/styles';
+import { BTN_DANGER, BTN_SECONDARY } from '@/components/ui/styles';
 
 interface ConfirmBoxProps {
   id: string;
@@ -21,9 +21,9 @@ export const ConfirmBox = ({ id, children, confirmLabel, busy, onConfirm, onCanc
     <div
       role="group"
       aria-labelledby={`${id}-text`}
-      className="rounded-[20px] border border-[#8B0000]/30 bg-[#8B0000]/[0.05] p-4 flex flex-col gap-3"
+      className="rounded-[16px] bg-danger/[0.08] p-4 sm:p-5 flex flex-col gap-4"
     >
-      <div id={`${id}-text`} className="flex flex-col gap-2 text-sm text-[#1A1614] leading-relaxed">{children}</div>
+      <div id={`${id}-text`} className="flex flex-col gap-2 type-caption text-ink">{children}</div>
       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
         <button ref={cancelRef} type="button" onClick={onCancel} disabled={busy} className={BTN_SECONDARY}>
           Cancel

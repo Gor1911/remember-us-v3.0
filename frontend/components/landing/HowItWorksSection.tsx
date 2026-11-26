@@ -1,10 +1,5 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { RevealSection } from '@/components/landing/RevealSection';
+import { SWIPE_ITEM, SWIPE_ROW } from '@/components/ui/styles';
 
 const STEPS = [
   {
@@ -13,7 +8,7 @@ const STEPS = [
   },
   {
     title: 'Add photographs',
-    desc: 'Upload portraits and family photos to bring the memorial to life.',
+    desc: 'Upload a main portrait and family photos to bring the memorial to life.',
   },
   {
     title: 'Choose a plan and submit',
@@ -24,54 +19,40 @@ const STEPS = [
     desc: 'Our team checks each page before it goes live, usually within 24 hours of submission.',
   },
   {
-    title: 'Receive your private link and QR code',
-    desc: 'Engrave it on a plaque or headstone. Premium: your Living Portrait is ready within 24 hours of approval, once a clear portrait photo is provided.',
+    title: 'Receive your link and QR code',
+    desc: 'Engrave it on a plaque or headstone. With Premium, your Living Portrait is ready within 24 hours of approval, once a clear portrait photo is provided.',
   },
 ];
 
+/** Sand chapter: centred heading, then three instruction tiles above a wider pair. */
 export function HowItWorksSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        defaults: { ease: 'power2.out', duration: 0.8 },
-        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', once: true },
-      });
-      tl.from('.how-header', { opacity: 0, y: 40 })
-        .from('.how-step', { opacity: 0, y: 40, stagger: 0.1 }, '-=0.5');
-    }, sectionRef);
-    return () => ctx.revert();
-  }, []);
 
   return (
-    <section ref={sectionRef} id="how-it-works" className="scroll-mt-16 bg-[#FAF8F5] py-24 border-t border-[#1A1614]/[0.06]">
-      <div className="site-container">
-        <div className="how-header text-center mb-16">
-          <div className="flex items-center justify-center gap-2.5 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-            <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">How it works</span>
-          </div>
-          <h2 className="text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
-            Five quiet steps.
-            <br />
-            <span className="text-[#8A7F74]">Nothing left to chance.</span>
+    <RevealSection id="how-it-works" aria-labelledby="how-title" className="scroll-mt-16 bg-sand text-ink py-chapter">
+      <div className="content-1000">
+        <div className="text-center flex flex-col items-center">
+          <h2 id="how-title" data-reveal className="type-heading max-w-[720px]">
+            Five quiet steps
           </h2>
+          <p data-reveal className="type-support text-muted max-w-[560px] mt-4">
+            You write and choose the photographs. We review, publish and look after the rest.
+          </p>
         </div>
 
-        <ol className="grid grid-cols-1 md:grid-cols-6 gap-4 list-none">
+        <ol className={`${SWIPE_ROW} md:grid-cols-6 gap-3 md:gap-4 mt-8 md:mt-12 list-none`} tabIndex={0} aria-label="Steps">
           {STEPS.map(({ title, desc }, i) => (
-            <li key={title} className={`how-step glass bento-pad flex flex-col gap-4 rounded-[32px] md:col-span-2 ${i === 3 ? 'md:col-start-2' : ''}`}>
-              <span className="text-[#8B0000] font-semibold text-sm tracking-[0.12em] tabular-nums">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <h3 className="text-[#1A1614] font-semibold text-lg leading-snug">{title}</h3>
-              <p className="text-[#6B6560] text-[15px] leading-relaxed">{desc}</p>
+            <li
+              key={title}
+              data-reveal
+              className={`${SWIPE_ITEM} bg-white rounded-tile p-6 flex flex-col gap-2 ${i < 3 ? 'md:col-span-2' : 'md:col-span-3'}`}
+            >
+              <span className="type-action text-bronze-deep tabular-nums mb-2">{String(i + 1).padStart(2, '0')}</span>
+              <h3 className="type-card-heading">{title}</h3>
+              <p className="type-body text-muted">{desc}</p>
             </li>
           ))}
         </ol>
       </div>
-    </section>
+    </RevealSection>
   );
 }

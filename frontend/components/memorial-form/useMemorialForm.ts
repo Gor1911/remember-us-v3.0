@@ -1,36 +1,38 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { pages, media } from '@/app/lib/api';
-import type { CreatePagePayload } from '@/app/lib/types';
+import { pages } from '@/app/lib/api';
+import type { MemorialPageDetail } from '@/app/lib/types';
 import {
-  EMPTY_FORM, MAX_PHOTOS, MIN_BIOGRAPHY_LENGTH, getDateErrors,
+  EMPTY_FORM, MAX_PHOTOS, MIN_BIOGRAPHY_LENGTH, PLAN_STEP, formFromPage, getDateErrors, getLifeErrors,
   type FormState, type PhotoEntry, type Step,
 } from './formTypes';
+import { createPayload, syncMedia, updatePayload } from './memorialSave';
 
 export interface CreatedResult {
   submitted: boolean;
   warning: string;
 }
 
-function uploadImage(slug: string, file: File, isPortrait: boolean) {
-  const fd = new FormData();
-  fd.append('file', file);
-  if (isPortrait) fd.append('is_primary_portrait', 'true');
-  return media.upload(slug, fd);
-}
+const revoke = (p: PhotoEntry | null | undefined) => {
+  if (p?.file) URL.revokeObjectURL(p.preview);
+};
 
-/** Form state, main photo + gallery handling and the create -> upload -> submit flow. */
+/** Form state, main photo + gallery handling, and the create / save flows. */
 export function useMemorialForm(isAdmin: boolean) {
   const [step, setStep]                 = useState<Step>(0);
   const [form, setForm]                 = useState<FormState>(EMPTY_FORM);
   const [photos, setPhotos]             = useState<PhotoEntry[]>([]);
-  /** Main photo (page cover), uploaded separately from the gallery. */
+  /** Main photo (round portrait), uploaded separately from the gallery. */
   const [portrait, setPortraitState]    = useState<PhotoEntry | null>(null);
+  /** Stored media the family removed while editing; deleted on save. */
+  const [removedIds, setRemovedIds]     = useState<string[]>([]);
   const [submitting, setSubmitting]     = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [apiError, setApiError]         = useState('');
   const [created, setCreated]           = useState<CreatedResult | null>(null);
+  /** Edit flow: set after a successful save (warning text, possibly empty). */
+  const [saved, setSaved]               = useState<{ warning: string } | null>(null);
   /** Slug of the draft once it exists (non-admins then pick a plan). */
   const [draftSlug, setDraftSlug]       = useState<string | null>(null);
   const [draftWarning, setDraftWarning] = useState('');
@@ -40,16 +42,37 @@ export function useMemorialForm(isAdmin: boolean) {
   useEffect(() => { photosRef.current = photos; }, [photos]);
   useEffect(() => { portraitRef.current = portrait; }, [portrait]);
   useEffect(() => () => {
-    photosRef.current.forEach((p) => URL.revokeObjectURL(p.preview));
-    if (portraitRef.current) URL.revokeObjectURL(portraitRef.current.preview);
+    photosRef.current.forEach(revoke);
+    revoke(portraitRef.current);
+  }, []);
+
+  /** Edit flow: fill the form from the stored memorial. */
+  const load = useCallback((p: MemorialPageDetail) => {
+    setForm(formFromPage(p));
+    const main = p.media_files.find((m) => m.is_primary_portrait) ?? null;
+    setPortraitState(main ? { id: main.id, preview: main.file_url } : null);
+    setPhotos(
+      p.media_files
+        .filter((m) => m.media_type === 'photo')
+        .sort((a, b) => a.order - b.order)
+        .map((m) => ({ id: m.id, preview: m.file_url })),
+    );
+    setRemovedIds([]);
+  }, []);
+
+  const markRemoved = useCallback((id: string | undefined) => {
+    if (id) setRemovedIds((ids) => (ids.includes(id) ? ids : [...ids, id]));
   }, []);
 
   const setPortrait = useCallback((file: File | null) => {
-    setPortraitState((prev) => {
-      if (prev) URL.revokeObjectURL(prev.preview);
-      return file ? { file, preview: URL.createObjectURL(file) } : null;
-    });
-  }, []);
+    const prev = portraitRef.current;
+    revoke(prev);
+    // A replaced main photo is swapped server-side on upload; a removed one must be deleted.
+    if (!file) markRemoved(prev?.id);
+    const next = file ? { file, preview: URL.createObjectURL(file) } : null;
+    portraitRef.current = next;
+    setPortraitState(next);
+  }, [markRemoved]);
 
   const set = useCallback(<K extends keyof FormState>(key: K, val: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -67,68 +90,39 @@ export function useMemorialForm(isAdmin: boolean) {
   }, []);
 
   const removePhoto = useCallback((index: number) => {
-    setPhotos((prev) => {
-      const copy = [...prev];
-      URL.revokeObjectURL(copy[index].preview);
-      copy.splice(index, 1);
-      return copy;
-    });
-  }, []);
+    const gone = photosRef.current[index];
+    if (!gone) return;
+    revoke(gone);
+    markRemoved(gone.id);
+    setPhotos((prev) => prev.filter((p) => p !== gone));
+  }, [markRemoved]);
 
   const dateErrors = getDateErrors(form);
+  const lifeErrors = getLifeErrors(form);
+  const bioOk = form.biography.trim().length >= MIN_BIOGRAPHY_LENGTH;
+  const nameOk = !!form.first_name.trim() && !!form.last_name.trim();
   const canNext =
-    step === 0
-      ? !!form.first_name.trim() && !!form.last_name.trim() && Object.keys(dateErrors).length === 0
-    : step === 1 ? form.biography.trim().length >= MIN_BIOGRAPHY_LENGTH
+    step === 0 ? nameOk && Object.keys(dateErrors).length === 0
+    : step === 1 ? bioOk
+    : step === 2 ? Object.keys(lifeErrors).length === 0
     : true;
 
+  /** Create flow: draft → photos → (admin) submit, or (owner) the plan step. */
   const create = useCallback(async () => {
     if (submitting || draftSlug) return;
     setSubmitting(true);
     setApiError('');
-    setUploadStatus('');
+    setUploadStatus('Saving…');
 
-    const payload: CreatePagePayload = {
-      page_type:  form.page_type,
-      first_name: form.first_name.trim(),
-      last_name:  form.last_name.trim(),
-      biography:  form.biography.trim(),
-      birth_date: form.birth_date || undefined,
-      death_date: form.death_date || undefined,
-    };
-    if (form.page_type === 'military') {
-      if (form.military_rank)   payload.military_rank   = form.military_rank.trim();
-      if (form.military_branch) payload.military_branch = form.military_branch.trim();
-      if (form.service_start)   payload.service_start   = form.service_start;
-      if (form.service_end)     payload.service_end     = form.service_end;
-    }
-
-    const res = await pages.create(payload);
+    const res = await pages.create(createPayload(form));
     if (!res.success) {
       setApiError(res.error);
+      setUploadStatus('');
       setSubmitting(false);
       return;
     }
     const slug = res.data.slug;
-
-    const problems: string[] = [];
-    // Main photo first, so the cover is in place even if a gallery upload fails.
-    if (portrait) {
-      setUploadStatus('Uploading main photo…');
-      const up = await uploadImage(slug, portrait.file, true);
-      if (!up.success) problems.push(`The main photo failed to upload (${up.error}).`);
-    }
-
-    let failedUploads = 0;
-    for (let i = 0; i < photos.length; i++) {
-      setUploadStatus(`Uploading gallery photo ${i + 1} of ${photos.length}…`);
-      const up = await uploadImage(slug, photos[i].file, false);
-      if (!up.success) failedUploads += 1;
-    }
-    if (failedUploads > 0) {
-      problems.push(`${failedUploads} gallery photo${failedUploads > 1 ? 's' : ''} failed to upload.`);
-    }
-    if (problems.length > 0) problems.push('You can add them later by editing the memorial.');
+    const problems = await syncMedia({ slug, portrait, photos, removedIds: [], onStatus: setUploadStatus });
     const uploadWarning = problems.join(' ');
 
     if (!isAdmin) {
@@ -137,11 +131,11 @@ export function useMemorialForm(isAdmin: boolean) {
       setSubmitting(false);
       setDraftSlug(slug);
       setDraftWarning(uploadWarning);
-      setStep(4);
+      setStep(PLAN_STEP);
       return;
     }
 
-    setUploadStatus('Submitting for review…');
+    setUploadStatus('Sending for review…');
     const sub = await pages.submit(slug);
     const warnings = [uploadWarning];
     if (!sub.success) warnings.push(sub.error);
@@ -150,8 +144,29 @@ export function useMemorialForm(isAdmin: boolean) {
     setCreated({ submitted: sub.success, warning: warnings.filter(Boolean).join(' ') });
   }, [form, portrait, photos, isAdmin, submitting, draftSlug]);
 
+  /** Edit flow: text and life rows in one PATCH, then photo changes. */
+  const save = useCallback(async (slug: string) => {
+    if (submitting) return;
+    setSubmitting(true);
+    setApiError('');
+    setUploadStatus('Saving changes…');
+
+    const res = await pages.update(slug, updatePayload(form));
+    if (!res.success) {
+      setApiError(res.error);
+      setUploadStatus('');
+      setSubmitting(false);
+      return;
+    }
+    const problems = await syncMedia({ slug, portrait, photos, removedIds, onStatus: setUploadStatus });
+    setUploadStatus('');
+    setSubmitting(false);
+    setSaved({ warning: problems.join(' ') });
+  }, [form, portrait, photos, removedIds, submitting]);
+
   return {
-    step, setStep, form, set, photos, addPhotos, removePhoto,
-    portrait, setPortrait, dateErrors, canNext, submitting, uploadStatus, apiError, created, create, draftSlug, draftWarning,
+    step, setStep, form, setForm, set, photos, addPhotos, removePhoto,
+    portrait, setPortrait, dateErrors, lifeErrors, canNext, submitting, uploadStatus, apiError,
+    created, create, saved, save, load, draftSlug, draftWarning,
   };
 }

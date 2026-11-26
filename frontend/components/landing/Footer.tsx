@@ -1,64 +1,60 @@
 import Link from 'next/link';
+import { FOCUS_ON_DARK } from '@/components/ui/styles';
 
 const NAV_COLUMNS = [
   {
     title: 'Product',
     links: [
-      { label: 'How It Works', href: '/#how-it-works' },
-      { label: 'Features',     href: '/#features' },
-      { label: 'QR Access',    href: '/#qr-access' },
-      { label: 'Pricing',      href: '/#pricing' },
-      { label: 'FAQ',          href: '/#faq' },
+      { label: 'How it works',    href: '/#how-it-works' },
+      { label: 'Features',        href: '/#features' },
+      { label: 'Living portrait', href: '/#living-portrait' },
+      { label: 'QR access',       href: '/#qr-access' },
+    ],
+  },
+  {
+    title: 'Plans',
+    links: [
+      { label: 'Pricing', href: '/#pricing' },
+      { label: 'FAQ',     href: '/#faq' },
     ],
   },
   {
     title: 'Explore',
     links: [
-      { label: 'Memorial Example', href: '/example' },
-      { label: 'My Memorials',     href: '/dashboard' },
+      { label: 'Memorial example', href: '/example' },
+    ],
+  },
+  {
+    title: 'Account',
+    links: [
+      { label: 'My memorials',   href: '/dashboard' },
+      { label: 'Reset password', href: '/forgot-password' },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'Terms of Service', href: '/terms' },
-      { label: 'Privacy Policy',   href: '/privacy' },
+      { label: 'Terms of service', href: '/terms' },
+      { label: 'Privacy policy',   href: '/privacy' },
     ],
   },
 ];
 
+/** Dense dark utility ending: link columns, wordmark row, legal paragraphs. */
 export function Footer() {
   return (
-    <footer className="bg-[#F3F0EB] border-t border-[#1A1614]/[0.08]">
-      <div className="site-container py-12">
-        <div className="grid grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] gap-x-6 gap-y-10 md:gap-12">
-
-          <div className="col-span-2 md:col-span-1 flex flex-col gap-5">
-            <Link href="/" className="flex items-center gap-2.5 no-underline w-fit">
-              <span className="w-2 h-2 rounded-full bg-[#8B0000]" />
-              <span className="text-[#1A1614] font-semibold text-[15px] tracking-tight">
-                Remember<span className="text-muted font-normal"> US</span>
-              </span>
-            </Link>
-            <p className="text-muted text-sm leading-relaxed max-w-[260px]">
-              A premium private digital memorial. Access by QR code only.
-              Built with respect for memory.
-            </p>
-            <div className="flex items-center gap-2 w-fit px-3 py-1.5 rounded-full border border-[#1A1614]/[0.10] bg-[#1A1614]/[0.03]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-              <span className="text-muted text-[11px] tracking-widest uppercase font-medium">USA · Premium</span>
-            </div>
-          </div>
-
+    <footer className="bg-ink text-linen">
+      <div className="content-1000 py-10">
+        <nav aria-label="Footer" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-8">
           {NAV_COLUMNS.map((col) => (
-            <div key={col.title} className="flex flex-col gap-4">
-              <span className="text-muted text-[11px] uppercase tracking-widest font-medium">{col.title}</span>
-              <ul className="flex flex-col gap-3 list-none">
+            <div key={col.title}>
+              <p className="type-utility-heading text-white">{col.title}</p>
+              <ul className="mt-2 list-none">
                 {col.links.map(({ label, href }) => (
                   <li key={label}>
                     <Link
                       href={href}
-                      className="text-muted hover:text-[#1A1614] text-sm transition-colors duration-200 no-underline"
+                      className={`block py-2 type-utility text-linen no-underline rounded-sm transition-colors duration-150 hover:text-white active:text-white/80 ${FOCUS_ON_DARK}`}
                     >
                       {label}
                     </Link>
@@ -67,13 +63,26 @@ export function Footer() {
               </ul>
             </div>
           ))}
-        </div>
-      </div>
+        </nav>
 
-      <div className="border-t border-[#1A1614]/[0.06]">
-        <div className="site-container py-6 flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-muted text-xs">© {new Date().getFullYear()} Remember US. All rights reserved.</p>
-          <p className="text-muted text-xs tracking-wide">Designed for Eternity. Built in USA.</p>
+        <div className="mt-10 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+          <Link href="/" className={`type-wordmark text-white no-underline rounded-sm ${FOCUS_ON_DARK}`}>
+            Remember US
+          </Link>
+          <p className="type-utility">Designed for Eternity. Built in USA.</p>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-3 max-w-[460px]">
+          <p className="type-utility">
+            Remember US memorials are private. They are not listed publicly or indexed by search
+            engines, and open only through their QR code or private link. Every memorial, and every
+            later change, is reviewed by our team before it becomes visible.
+          </p>
+          <p className="type-utility">
+            Living Portrait animations are generated with AI from a photograph you provide, with your
+            confirmation that you have the right to use it.
+          </p>
+          <p className="type-utility mt-2">© {new Date().getFullYear()} Remember US. All rights reserved.</p>
         </div>
       </div>
     </footer>

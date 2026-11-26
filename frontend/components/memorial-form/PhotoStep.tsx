@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { CameraIcon, CloseIcon, PlusIcon } from '@/components/dashboard/Icons';
+import { CameraIcon, CloseIcon, PlusIcon } from '@/components/ui/icons';
+import { ERROR_TEXT, FOCUS, HINT } from '@/components/ui/styles';
 import { MAX_PHOTOS, type PhotoEntry } from './formTypes';
 import { FORMATS_HINT, IMAGE_ACCEPT, screenImages } from './imageFiles';
 
@@ -41,19 +42,19 @@ export const PhotoStep = ({ photos, onAdd, onRemove }: PhotoStepProps) => {
           onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
           onClick={() => inputRef.current?.click()}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
-          className={`flex flex-col items-center justify-center gap-3 rounded-[20px] border-2 border-dashed cursor-pointer transition-colors py-12 px-6 text-center ${
+          className={`flex flex-col items-center justify-center gap-4 rounded-tile border-2 border-dashed cursor-pointer transition-colors duration-300 py-12 px-6 text-center ${FOCUS} ${
             dragging
-              ? 'border-[#8B0000] bg-[#8B0000]/[0.05]'
-              : 'border-[#1A1614]/[0.15] bg-white/60 hover:border-[#1A1614]/30 hover:bg-white'
+              ? 'border-bronze-deep bg-soft'
+              : 'border-ink/20 bg-canvas hover:border-ink/35 hover:bg-soft'
           }`}
         >
-          <div className="w-12 h-12 rounded-full bg-[#1A1614]/[0.05] flex items-center justify-center text-[#6B6560]">
-            <CameraIcon className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-[#1A1614] text-sm font-medium">Drop photos here or click to browse</p>
-            <p className="text-[#6B6560] text-xs mt-1">{FORMATS_HINT} each, up to {MAX_PHOTOS} photos</p>
-          </div>
+          <span className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-bronze">
+            <CameraIcon className="w-7 h-7" />
+          </span>
+          <span className="flex flex-col gap-1">
+            <span className="type-action text-ink">Drop photos here or click to browse</span>
+            <span className={HINT}>{FORMATS_HINT} each, up to {MAX_PHOTOS} photos</span>
+          </span>
         </div>
       )}
       <input
@@ -62,7 +63,7 @@ export const PhotoStep = ({ photos, onAdd, onRemove }: PhotoStepProps) => {
       />
 
       {problems.length > 0 && (
-        <ul role="alert" className="flex flex-col gap-1 text-[#8B0000] text-xs">
+        <ul role="alert" className={`flex flex-col gap-1 ${ERROR_TEXT}`}>
           {problems.map((p) => <li key={p}>{p}</li>)}
         </ul>
       )}
@@ -70,16 +71,16 @@ export const PhotoStep = ({ photos, onAdd, onRemove }: PhotoStepProps) => {
       {photos.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {photos.map((p, i) => (
-            <div key={p.preview} className="relative group rounded-[16px] overflow-hidden aspect-square bg-[#F3F0EB]">
+            <div key={p.preview} className="relative rounded-[12px] overflow-hidden aspect-square bg-soft">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.preview} alt="" className="w-full h-full object-cover" />
               <button
                 type="button"
                 aria-label="Remove photo"
                 onClick={() => onRemove(i)}
-                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 text-[#8B0000] flex items-center justify-center shadow-sm hover:bg-white"
+                className={`absolute top-1.5 right-1.5 w-11 h-11 rounded-full bg-white/90 text-danger flex items-center justify-center shadow-control transition-opacity hover:opacity-85 ${FOCUS}`}
               >
-                <CloseIcon className="w-3.5 h-3.5" />
+                <CloseIcon className="w-4 h-4" />
               </button>
             </div>
           ))}
@@ -88,15 +89,15 @@ export const PhotoStep = ({ photos, onAdd, onRemove }: PhotoStepProps) => {
               type="button"
               aria-label="Add more photos"
               onClick={() => inputRef.current?.click()}
-              className="rounded-[16px] aspect-square border-2 border-dashed border-[#1A1614]/[0.15] hover:border-[#1A1614]/30 hover:bg-white flex items-center justify-center text-[#6B6560] transition-colors"
+              className={`rounded-[12px] aspect-square border-2 border-dashed border-ink/20 bg-canvas hover:border-ink/35 hover:bg-soft flex items-center justify-center text-bronze transition-colors duration-300 ${FOCUS}`}
             >
-              <PlusIcon className="w-6 h-6" />
+              <PlusIcon className="w-7 h-7" />
             </button>
           )}
         </div>
       )}
 
-      <p className="text-[#6B6560] text-xs text-center">
+      <p className={`${HINT} text-center`}>
         These photos appear in the memorial&apos;s gallery. The main photo is set on the first step.
       </p>
     </div>

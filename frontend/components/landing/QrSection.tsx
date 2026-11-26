@@ -1,75 +1,70 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { CheckIcon, LockIcon } from '@/components/ui/icons';
+import { RevealSection } from '@/components/landing/RevealSection';
 
-gsap.registerPlugin(ScrollTrigger);
+const FACTS = ['Engraved on metal or stone', 'No app or password', 'Opens on any phone'];
 
-const ITEMS = ['Engraved on metal or stone', 'No login or password required', 'Works on any smartphone'];
-
+/** Canvas chapter: the physical link as a real, scannable QR code, then one decisive reason to trust it. */
 export function QrSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        defaults: { ease: 'power2.out', duration: 0.8 },
-        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', once: true },
-      });
-      tl.from('.qr-visual', { opacity: 0, y: 40 })
-        .from('.qr-text', { opacity: 0, y: 40, stagger: 0.1 }, 0.1)
-        .from('.qr-item', { opacity: 0, y: 40, stagger: 0.1 }, '-=0.5');
-    }, sectionRef);
-    return () => ctx.revert();
-  }, []);
 
   return (
-    <section ref={sectionRef} id="qr-access" className="scroll-mt-16 bg-[#FAF8F5] py-24 border-t border-[#1A1614]/[0.06]">
-      <div className="site-container">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+    <RevealSection
+      id="qr-access"
+      aria-labelledby="qr-title"
+      className="relative scroll-mt-16 bg-canvas text-ink py-chapter"
+    >
+      <div className="content-1000">
+        <div className="flex flex-col items-center text-center">
+          <h2 id="qr-title" data-reveal className="type-heading max-w-[720px]">
+            A physical link to their story
+          </h2>
+          <p data-reveal className="type-support text-muted max-w-[560px] mt-4">
+            Place the code on a headstone, a plaque or a frame at home. One scan opens the
+            memorial on any screen.
+          </p>
+        </div>
 
-          <div className="qr-visual flex justify-center order-2 md:order-1">
-            <div className="glass rounded-[32px] p-10 flex flex-col items-center gap-6">
-              <div className="p-5 rounded-2xl bg-white border border-[#1A1614]/[0.08]">
-                <Image
-                  src="/images/qr-example.svg"
-                  alt="Example QR code linking to the Remember US example memorial"
-                  width={29} height={29} unoptimized
-                  className="w-[145px] h-[145px] [image-rendering:pixelated]"
-                />
-              </div>
-              <p className="text-muted text-xs tracking-widest uppercase">Scan to access</p>
-            </div>
-          </div>
+        <div data-reveal className="flex justify-center mt-8 md:mt-10">
+          <figure className="bg-white rounded-tile p-6 flex flex-col items-center gap-4 shadow-card">
+            <Image
+              src="/images/qr-example.svg"
+              alt="Example QR code that opens the Remember US example memorial"
+              width={29}
+              height={29}
+              unoptimized
+              className="w-[168px] h-[168px] [image-rendering:pixelated]"
+            />
+            <figcaption className="type-caption text-muted">Scan to open the example</figcaption>
+          </figure>
+        </div>
 
-          <div className="flex flex-col gap-6 order-1 md:order-2">
-            <div className="qr-text flex items-center gap-2.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-              <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">QR Access</span>
-            </div>
-            <h2 className="qr-text text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
-              A physical link
-              <br />
-              <span className="text-[#8A7F74]">to digital memory.</span>
-            </h2>
-            <p className="qr-text text-muted text-base leading-relaxed max-w-md">
-              The QR code is placed on a headstone, memorial plaque, or a frame at home.
-              One scan — and the memorial opens on any screen.
+        <ul data-reveal className="flex flex-wrap justify-center gap-x-8 gap-y-3 list-none mt-6">
+          {FACTS.map((fact) => (
+            <li key={fact} className="flex items-center gap-2 type-caption text-muted">
+              <CheckIcon className="w-5 h-5 text-bronze" />
+              {fact}
+            </li>
+          ))}
+        </ul>
+
+        {/* Reasoning panel */}
+        <div
+          data-reveal
+          className="mt-12 md:mt-16 bg-sand rounded-tile p-8 md:p-12 flex flex-col md:flex-row gap-8 md:gap-12"
+        >
+          <div className="md:w-1/2 flex flex-col gap-6">
+            <LockIcon className="w-9 h-9 text-bronze" />
+            <p className="type-stat">
+              A memorial that is <strong className="font-bold text-bronze-deep">never public</strong>
             </p>
-            <ul className="flex flex-col gap-3">
-              {ITEMS.map((item) => (
-                <li key={item} className="qr-item flex items-center gap-3 text-muted text-sm">
-                  <span className="w-1 h-1 rounded-full bg-[#8B0000] shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
           </div>
+          <p className="md:w-1/2 type-support text-muted md:pt-[56px]">
+            Search engines never index it and nobody can browse to it. It opens only through its
+            QR code or private link — and our team reviews every memorial, and every later change,
+            before anyone sees it.
+          </p>
         </div>
       </div>
-    </section>
+    </RevealSection>
   );
 }

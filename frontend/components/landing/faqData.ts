@@ -22,7 +22,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     q: 'Who can edit a memorial?',
-    a: 'Only the person who created it. Every change is reviewed by our team before it becomes visible.',
+    a: 'Only the person who created it, from their dashboard. Every change is reviewed by our team before it becomes visible — meanwhile, guests keep seeing the memorial as it was.',
   },
   {
     q: 'How long does the review take?',

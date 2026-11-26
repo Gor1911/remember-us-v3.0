@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { reports } from '@/app/lib/api';
 import type { Report } from '@/app/lib/types';
-import { BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY, BTN_SM, FIELD } from './styles';
+import { BTN_SM_DANGER, BTN_SM_DARK, BTN_SM_SOFT, ERROR_TEXT, FIELD, LABEL } from '@/components/ui/styles';
+
+const QUEUE_ITEM = 'bg-white rounded-tile p-5';
 
 type Action = 'dismiss' | 'resolve' | 'hide_page';
 
@@ -62,47 +64,51 @@ export const ReportsQueue = ({ onPageChanged }: ReportsQueueProps) => {
   };
 
   return (
-    <section className="mb-12" aria-labelledby="reports-heading">
-      <div className="flex items-center gap-2 mb-5">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-        <h2 id="reports-heading" className="text-[#6B6560] text-[11px] uppercase tracking-widest font-medium">
+    <section className="mb-14" aria-labelledby="reports-heading">
+      <div className="flex items-center gap-2.5 mb-4">
+        <h2 id="reports-heading" className="type-section-heading text-ink">
           Reports
         </h2>
-        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#8B0000]/10 text-[#8B0000]" aria-label={`${items.length} open`}>
+        <span
+          className={`rounded-full px-2.5 py-0.5 type-utility font-medium tabular-nums ${items.length > 0 ? 'bg-danger/[0.08] text-danger' : 'bg-ink/[0.06] text-muted'}`}
+          aria-label={`${items.length} open`}
+        >
           {items.length}
         </span>
       </div>
 
-      <p role="alert" className="text-[#8B0000] text-sm mb-3 empty:hidden">{error}</p>
+      <p role="alert" className={`${ERROR_TEXT} mb-3 empty:hidden`}>{error}</p>
 
       {loaded && items.length === 0 && !error && (
-        <p className="glass rounded-[24px] p-6 text-sm text-[#6B6560]">No open reports.</p>
+        <p className={`${QUEUE_ITEM} type-caption text-muted`}>No open reports.</p>
       )}
 
-      <ul className="flex flex-col gap-3">
+      <ul className="flex flex-col gap-2.5">
         {items.map((r) => {
           const isActive = active?.id === r.id;
           const busy = busyId === r.id;
           return (
-            <li key={r.id} className="glass rounded-[24px] p-5 flex flex-col gap-3">
+            <li key={r.id} className={`${QUEUE_ITEM} flex flex-col gap-3`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[#1A1614] font-semibold text-sm">
+                  <p className="font-display font-medium text-[16px] text-ink">
                     {r.page.first_name} {r.page.last_name}
-                    {r.page.hidden && <span className="ml-2 text-xs font-medium text-[#8B0000]">Hidden</span>}
+                    {r.page.hidden && (
+                      <span className="ml-2 align-middle rounded-full bg-danger/[0.08] px-2 py-0.5 type-utility font-medium text-danger">Hidden</span>
+                    )}
                   </p>
-                  <p className="text-xs text-[#6B6560] mt-0.5">
+                  <p className="type-caption text-muted">
                     {CATEGORY_LABEL[r.category]} · {new Date(r.created_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}
                   </p>
                 </div>
                 {r.page.slug && (
-                  <Link href={`/${r.page.slug}`} className={`${BTN_SM} text-[#1A1614] bg-white border border-[#1A1614]/10 hover:bg-[#F3F0EB] no-underline`}>
+                  <Link href={`/${r.page.slug}`} className={`${BTN_SM_SOFT} no-underline`}>
                     View page
                   </Link>
                 )}
               </div>
-              <p className="text-sm text-[#1A1614] leading-relaxed whitespace-pre-wrap break-words">{r.message}</p>
-              <p className="text-xs text-[#6B6560]">Contact: {r.contact_email || 'not provided'}</p>
+              <p className="rounded-[14px] bg-soft px-4 py-3 type-caption text-ink whitespace-pre-wrap break-words">{r.message}</p>
+              <p className="type-caption text-muted">Contact: {r.contact_email || 'not provided'}</p>
 
               <div className="flex flex-wrap gap-2">
                 {(['dismiss', 'resolve', 'hide_page'] as const).map((act) => (
@@ -112,7 +118,7 @@ export const ReportsQueue = ({ onPageChanged }: ReportsQueueProps) => {
                     disabled={busy}
                     aria-expanded={isActive && active?.action === act}
                     onClick={() => open(r.id, act)}
-                    className={`${act === 'hide_page' ? BTN_DANGER : BTN_SECONDARY} !px-4 !py-2 !text-xs !rounded-[12px]`}
+                    className={act === 'hide_page' ? BTN_SM_DANGER : BTN_SM_SOFT}
                   >
                     {ACTION_LABEL[act]}
                   </button>
@@ -120,8 +126,8 @@ export const ReportsQueue = ({ onPageChanged }: ReportsQueueProps) => {
               </div>
 
               {isActive && active && (
-                <div className="flex flex-col gap-2">
-                  <label htmlFor={`report-note-${r.id}`} className="text-[11px] uppercase tracking-widest text-[#6B6560] font-medium">
+                <div className="flex flex-col gap-2 border-t border-ink/10 pt-3">
+                  <label htmlFor={`report-note-${r.id}`} className={LABEL}>
                     {active.action === 'hide_page' ? 'Reason (required)' : 'Note (optional)'}
                   </label>
                   <textarea
@@ -129,10 +135,10 @@ export const ReportsQueue = ({ onPageChanged }: ReportsQueueProps) => {
                     required={active.action === 'hide_page'} className={`${FIELD} resize-none`}
                   />
                   <div className="flex justify-end gap-2">
-                    <button type="button" onClick={() => setActive(null)} className={`${BTN_SM} text-[#6B6560] hover:text-[#1A1614]`}>
+                    <button type="button" onClick={() => setActive(null)} className={BTN_SM_SOFT}>
                       Cancel
                     </button>
-                    <button type="button" disabled={busy} onClick={() => void submit(r)} className={`${BTN_PRIMARY} !px-4 !py-2 !text-xs !rounded-[12px]`}>
+                    <button type="button" disabled={busy} onClick={() => void submit(r)} className={active.action === 'hide_page' ? BTN_SM_DANGER : BTN_SM_DARK}>
                       {busy ? 'Saving…' : `Confirm: ${ACTION_LABEL[active.action]}`}
                     </button>
                   </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { LINK, NOTICE_INFO } from '@/components/ui/styles';
 
 /** Shows a dismissible notice after Stripe returns with ?checkout=canceled, then cleans the URL. */
 export const CheckoutCanceledNotice = () => {
@@ -19,14 +20,14 @@ export const CheckoutCanceledNotice = () => {
 
   if (!visible) return null;
   return (
-    <div role="status" className="mb-8 flex items-start justify-between gap-4 rounded-[16px] border border-[#1A1614]/10 bg-white px-4 py-3">
-      <p className="text-sm text-[#1A1614]">
+    <div role="status" className={`${NOTICE_INFO} mb-10 flex items-start justify-between gap-4`}>
+      <p>
         Payment was canceled. Your draft is saved — you can complete payment any time.
       </p>
       <button
         type="button"
         onClick={() => setVisible(false)}
-        className="shrink-0 text-sm font-medium text-[#6B6560] hover:text-[#1A1614] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]"
+        className={`${LINK} shrink-0 font-medium`}
       >
         Dismiss
       </button>

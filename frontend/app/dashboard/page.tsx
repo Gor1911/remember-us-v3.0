@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import { useAuth } from '@/app/hooks/useAuth';
+import { ModalProvider } from '@/app/context/ModalContext';
 import { Header } from '@/components/landing/Header';
+import { CreateMemorialModal } from '@/components/landing/CreateMemorialModal';
 import { useDashboardData } from '@/components/dashboard/useDashboardData';
 import { DashboardHeading } from '@/components/dashboard/DashboardHeading';
 import { ModerationQueue } from '@/components/dashboard/ModerationQueue';
@@ -16,6 +18,9 @@ import { CheckoutCanceledNotice } from '@/components/dashboard/CheckoutCanceledN
 import { PlanSelectDialog } from '@/components/payments/PlanSelectDialog';
 import { AccessDialog } from '@/components/access/AccessDialog';
 import type { MemorialPageListItem } from '@/app/lib/types';
+import { NOTICE_ERROR, PAGE } from '@/components/ui/styles';
+
+const CONTAINER = 'w-[min(100%-32px,1120px)] mx-auto';
 
 export default function DashboardPage() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -36,6 +41,7 @@ export default function DashboardPage() {
   // Stagger cards in once data has loaded
   useEffect(() => {
     if (fetching || memorials.length === 0 || !listRef.current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const ctx = gsap.context(() => {
       gsap.from('.memorial-card', {
         opacity: 0, y: 20, duration: 0.6, ease: 'power2.out', stagger: 0.1, clearProps: 'all',
@@ -46,17 +52,18 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
-        <span className="text-[#6B6560] text-sm">Loading…</span>
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <span className="type-caption text-muted">Loading…</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-[#1A1614]">
+    <ModalProvider>
+    <div className={PAGE}>
       <Header />
 
-      <div className="site-container pt-28 pb-20 max-w-4xl mx-auto">
+      <main id="main" className={`${CONTAINER} pt-4 md:pt-8`}>
         <DashboardHeading
           user={user}
           total={memorials.length}
@@ -67,7 +74,7 @@ export default function DashboardPage() {
         <CheckoutCanceledNotice />
 
         {(error || actionError) && (
-          <p role="alert" className="text-[#8B0000] text-sm bg-[#8B0000]/[0.06] border border-[#8B0000]/15 rounded-[12px] px-4 py-3 mb-8">
+          <p role="alert" className={`${NOTICE_ERROR} mb-10`}>
             {actionError || error}
           </p>
         )}
@@ -84,9 +91,9 @@ export default function DashboardPage() {
         )}
 
         {fetching && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" aria-hidden="true">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="glass rounded-[24px] p-6 h-[180px] animate-pulse" />
+              <div key={i} className="bg-white rounded-tile h-[240px] animate-pulse" />
             ))}
           </div>
         )}
@@ -96,7 +103,7 @@ export default function DashboardPage() {
         {!fetching && memorials.length > 0 && (
           <div ref={listRef}>
             {isAdmin && (
-              <h2 className="text-[#1A1614] font-bold text-xl tracking-tight mb-6">All memorials</h2>
+              <h2 className="type-card-heading text-ink mb-8">All memorials</h2>
             )}
             <MemorialGroups
               memorials={memorials}
@@ -112,7 +119,7 @@ export default function DashboardPage() {
         )}
 
         {user && <AccountSection email={user.email} />}
-      </div>
+      </main>
 
       {planPage && (
         <PlanSelectDialog
@@ -126,5 +133,7 @@ export default function DashboardPage() {
         <AccessDialog slug={accessSlug} onClose={() => setAccessSlug(null)} onSlugChanged={data.refresh} />
       )}
     </div>
+    <CreateMemorialModal />
+    </ModalProvider>
   );
 }

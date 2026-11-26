@@ -16,7 +16,7 @@ export const EXAMPLE = {
     { year: '1945', label: 'WWII Service', desc: 'Pacific Theater' },
     { year: '1962', label: 'Vietnam',      desc: 'Southeast Asia deployment' },
     { year: '1973', label: 'Retired',      desc: 'Chief Master Sergeant' },
-    { year: '2023', label: 'Passed Away',  desc: 'Aged 99' },
+    { year: '2023', label: 'Passed away',  desc: 'Aged 99' },
   ],
   awards: [
     { name: 'Purple Heart',          desc: 'For wounds received in action' },
@@ -24,10 +24,13 @@ export const EXAMPLE = {
     { name: 'Vietnam Service Medal', desc: 'For service in Southeast Asia' },
     { name: 'WWII Victory Medal',    desc: 'For service during World War II' },
   ],
+  // One person throughout: the avatar, the living portrait and the first photo show the same man.
+  // His name tag and the plaque on the wall are blurred, since the example uses a fictional name.
+  // The other photos are credited stock without identifiable people (public/images/stock/CREDITS.md).
   gallery: [
-    { id: '1', src: '/images/Veteran1.jpg', alt: 'William R. Davis', caption: 'In uniform', featured: true },
-    { id: '2', src: '/images/veteran2.jpg', alt: 'Service portrait', caption: 'Service portrait' },
-    { id: '3', src: '/images/veteran3.jpg', alt: 'Medal ceremony',   caption: 'Medal ceremony' },
-    { id: '4', src: '/images/veteran4.jpg', alt: 'Family portrait',  caption: 'Family portrait' },
+    { id: '1', src: '/images/example-veteran.jpg', alt: 'William in his Air Force dress uniform at home, his medals framed on the wall beside him', caption: 'At home in Phoenix, in his dress blues', featured: true },
+    { id: '2', src: '/images/stock/memory-photos.jpg', alt: 'Hands holding a stack of old black-and-white family photographs', caption: 'Letters and photos from the Pacific' },
+    { id: '3', src: '/images/stock/memory-tree.jpg', alt: 'A lone tree in a meadow at golden hour', caption: 'The oak behind the farmhouse in Springfield' },
+    { id: '4', src: '/images/stock/memory-sunrise.jpg', alt: 'White wildflowers in a field at sunrise', caption: 'Veterans Day, 2023' },
   ] as GalleryPhoto[],
 };

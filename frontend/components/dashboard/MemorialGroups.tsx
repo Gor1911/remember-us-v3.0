@@ -2,9 +2,9 @@ import type { MemorialPageListItem, PageState } from '@/app/lib/types';
 import { MemorialCard } from './MemorialCard';
 
 const GROUPS: { state: PageState; label: string; dot: string }[] = [
-  { state: 'active',     label: 'Active',    dot: 'bg-[#2F6B4F]' },
-  { state: 'moderation', label: 'In Review', dot: 'bg-[#B7791F]' },
-  { state: 'draft',      label: 'Drafts',    dot: 'bg-[#8A7F74]' },
+  { state: 'active',     label: 'Active',    dot: 'bg-sage' },
+  { state: 'moderation', label: 'In review', dot: 'bg-amber-deep' },
+  { state: 'draft',      label: 'Drafts',    dot: 'bg-ink/30' },
 ];
 
 interface MemorialGroupsProps {
@@ -21,17 +21,18 @@ interface MemorialGroupsProps {
 export const MemorialGroups = ({
   memorials, currentUserId, isAdmin, busySlug, onSubmit, onChoosePlan, onAccess, onChanged,
 }: MemorialGroupsProps) => (
-  <div className="flex flex-col gap-10">
+  <div className="flex flex-col gap-14">
     {GROUPS.map(({ state, label, dot }) => {
       const items = memorials.filter((m) => m.state === state);
       if (items.length === 0) return null;
       return (
         <section key={state}>
-          <div className="flex items-center gap-2 mb-5">
-            <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-            <h2 className="text-[#6B6560] text-[11px] uppercase tracking-widest font-medium">{label}</h2>
+          <div className="flex items-center gap-2.5 mb-5">
+            <span aria-hidden="true" className={`w-2 h-2 rounded-full ${dot}`} />
+            <h2 className="type-section-heading text-ink">{label}</h2>
+            <span className="type-caption text-muted tabular-nums">{items.length}</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
             {items.map((p) => (
               <MemorialCard
                 key={p.id}

@@ -2,6 +2,7 @@ import { ModalProvider } from '@/app/context/ModalContext';
 import { Header } from '@/components/landing/Header';
 import { Footer } from '@/components/landing/Footer';
 import { CreateMemorialModal } from '@/components/landing/CreateMemorialModal';
+import { NARROW, PAGE } from '@/components/ui/styles';
 
 interface AuthShellProps {
   title: string;
@@ -9,14 +10,19 @@ interface AuthShellProps {
   children: React.ReactNode;
 }
 
+/** Auth page scaffolding: canvas page with one centred white card in a narrow column. */
 export const AuthShell = ({ title, intro, children }: AuthShellProps) => (
   <ModalProvider>
     <Header />
-    <main className="bg-[#FAF8F5] min-h-screen pt-28 pb-24">
-      <div className="site-container max-w-md">
-        <h1 className="text-[#1A1614] font-bold text-3xl tracking-tight">{title}</h1>
-        {intro && <p className="mt-3 text-muted text-base leading-relaxed">{intro}</p>}
-        <div className="glass p-8 mt-8">{children}</div>
+    <main id="main" className={`${PAGE} md:pt-32 md:pb-28`}>
+      <div className={NARROW}>
+        <div className="bg-white rounded-[24px] p-8 shadow-card flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
+            <h1 className="type-card-heading">{title}</h1>
+            {intro && <p className="type-body text-muted">{intro}</p>}
+          </div>
+          {children}
+        </div>
       </div>
     </main>
     <Footer />

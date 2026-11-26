@@ -1,64 +1,31 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useState } from 'react';
 import { FAQ_ITEMS } from '@/components/landing/faqData';
+import { useReveal } from '@/components/landing/useReveal';
+import { PlusIcon } from '@/components/ui/icons';
 
-gsap.registerPlugin(ScrollTrigger);
-
-function PlusIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
-      className={`w-5 h-5 shrink-0 text-[#8B0000] transition-transform duration-300 ease-out ${open ? 'rotate-45' : ''}`}
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
-
+/** Sand chapter: eyebrow, heading and accordion rows. */
 export function FaqSection() {
-  const sectionRef = useRef<HTMLElement>(null);
+  const ref = useReveal<HTMLElement>();
   const [openIds, setOpenIds] = useState<number[]>([]);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        defaults: { ease: 'power2.out', duration: 0.8 },
-        scrollTrigger: { trigger: sectionRef.current, start: 'top 80%', once: true },
-      });
-      tl.from('.faq-header', { opacity: 0, y: 40 })
-        .from('.faq-item', { opacity: 0, y: 40, stagger: 0.1 }, '-=0.5');
-    }, sectionRef);
-    return () => ctx.revert();
-  }, []);
 
   const toggle = (i: number) =>
     setOpenIds((ids) => (ids.includes(i) ? ids.filter((x) => x !== i) : [...ids, i]));
 
   return (
-    <section ref={sectionRef} id="faq" className="scroll-mt-16 bg-[#F3F0EB] py-24 border-t border-[#1A1614]/[0.06]">
-      <div className="site-container max-w-3xl">
-        <div className="faq-header text-center mb-16">
-          <div className="flex items-center justify-center gap-2.5 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-            <span className="uppercase text-muted text-[11px] tracking-[0.12em] font-medium">FAQ</span>
-          </div>
-          <h2 className="text-[#1A1614] font-bold text-3xl md:text-4xl xl:text-5xl leading-[1.1] tracking-tight">
-            Questions,
-            <br />
-            <span className="text-[#8A7F74]">answered plainly.</span>
-          </h2>
+    <section ref={ref} id="faq" aria-labelledby="faq-title" className="scroll-mt-16 bg-sand text-ink py-chapter">
+      <div className="content-1000">
+        <div className="text-center mb-8 md:mb-12">
+          <p data-reveal className="type-card-heading text-bronze-deep">Questions</p>
+          <h2 id="faq-title" data-reveal className="type-heading mt-3">Answered plainly</h2>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div>
           {FAQ_ITEMS.map(({ q, a }, i) => {
             const open = openIds.includes(i);
             return (
-              <div key={q} className="faq-item glass rounded-[24px]">
+              <div key={q} data-reveal className="border-b border-ink/15 mb-3">
                 <h3>
                   <button
                     type="button"
@@ -66,20 +33,21 @@ export function FaqSection() {
                     aria-expanded={open}
                     aria-controls={`faq-panel-${i}`}
                     onClick={() => toggle(i)}
-                    className="w-full flex items-center justify-between gap-4 text-left px-6 py-5 rounded-[24px] text-[#1A1614] font-semibold text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]"
+                    className="w-full min-h-[68px] flex items-center justify-between gap-6 text-left py-3 type-card-heading rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bronze-deep"
                   >
-                    <span>{q}</span>
-                    <PlusIcon open={open} />
+                    <span className="text-[20px] leading-[26px] md:text-[24px] md:leading-[28px]">{q}</span>
+                    <span className={`shrink-0 text-bronze transition-transform duration-300 ease-out ${open ? 'rotate-45' : ''}`}>
+                      <PlusIcon className="w-8 h-8" />
+                    </span>
                   </button>
                 </h3>
                 <div
                   id={`faq-panel-${i}`}
-                  role="region"
-                  aria-labelledby={`faq-btn-${i}`}
-                  className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+                  className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
                 >
-                  <div className="overflow-hidden">
-                    <p className="px-6 pb-6 text-[#6B6560] text-[15px] leading-relaxed">{a}</p>
+                  {/* inert keeps a collapsed answer out of the reading order (it is only visually 0 tall) */}
+                  <div className="overflow-hidden" inert={!open}>
+                    <p className="type-body text-muted max-w-[720px] pb-5">{a}</p>
                   </div>
                 </div>
               </div>

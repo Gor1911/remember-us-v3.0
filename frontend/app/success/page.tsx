@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { ModalProvider, useModal } from '@/app/context/ModalContext';
 import { useAuth } from '@/app/hooks/useAuth';
 import { CreateMemorialModal } from '@/components/landing/CreateMemorialModal';
+import { BTN_PRIMARY, EYEBROW } from '@/components/ui/styles';
 import { SuccessView } from './SuccessView';
 import { usePaymentPolling } from './usePaymentPolling';
 
-const H1 = 'text-[#1A1614] font-bold text-3xl tracking-tight';
-const BTN =
-  'px-6 py-3 rounded-[14px] bg-[#8B0000] text-white text-sm font-medium no-underline hover:bg-[#A00000] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]';
+const H1 = 'type-heading text-ink text-balance';
 
 function SuccessContent() {
   const { isAuthenticated, loading } = useAuth();
@@ -29,29 +28,26 @@ function SuccessContent() {
   const needsLogin = ready && !loading && !isAuthenticated;
 
   return (
-    <main className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center px-6 py-24 text-center gap-6">
-      <div className="flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-        <span className="text-muted text-[11px] uppercase tracking-[0.14em] font-medium">Remember US</span>
-      </div>
-      <div aria-live="polite" className="flex flex-col items-center gap-6 w-full">
+    <main id="main" className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center px-4 py-24 text-center gap-6">
+      <p className={EYEBROW}>Remember US</p>
+      <div aria-live="polite" className="w-[min(100%,560px)] flex flex-col items-center gap-6">
         {!ready || loading ? (
-          <p className="text-muted text-base">Loading…</p>
+          <p className="type-body text-muted">Loading…</p>
         ) : !sessionId ? (
           <>
             <h1 className={H1}>Nothing to confirm</h1>
-            <Link href="/dashboard" className={BTN}>Go to your dashboard</Link>
+            <Link href="/dashboard" className={BTN_PRIMARY}>Go to your dashboard</Link>
           </>
         ) : needsLogin ? (
           <>
             <h1 className={H1}>Sign in to see your payment</h1>
-            <p className="text-muted text-base max-w-md">
+            <p className="type-body text-muted max-w-md">
               Sign in with the account you used to pay and we will confirm it for you.
             </p>
             <button
               type="button"
               onClick={() => openAuth(`/success?session_id=${encodeURIComponent(sessionId)}`)}
-              className={BTN}
+              className={BTN_PRIMARY}
             >
               Sign in
             </button>

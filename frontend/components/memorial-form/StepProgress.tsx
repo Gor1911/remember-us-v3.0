@@ -1,38 +1,53 @@
-import { CheckIcon } from '@/components/dashboard/Icons';
-import { STEPS, type Step } from './formTypes';
+import { TickIcon } from '@/components/ui/icons';
+import type { Step } from './formTypes';
 
 interface StepProgressProps {
   step: Step;
+  steps: readonly string[];
 }
 
-export const StepProgress = ({ step }: StepProgressProps) => (
-  <ol className="flex items-center gap-2 mb-10 flex-wrap">
-    {STEPS.map((label, i) => {
-      const done = i < step;
-      const current = i === step;
-      return (
-        <li key={label} className="flex items-center gap-2" aria-current={current ? 'step' : undefined}>
-          <div
-            className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-medium transition-colors duration-300 ${
-              done ? 'bg-[#8B0000] text-white'
-              : current ? 'bg-[#8B0000]/10 border border-[#8B0000] text-[#8B0000]'
-              : 'bg-white border border-[#1A1614]/[0.12] text-muted'
-            }`}
+/** Calm row of numbered steps: current = ink circle, done = sage tick, upcoming = outline. */
+export const StepProgress = ({ step, steps }: StepProgressProps) => (
+  <nav aria-label="Progress" className="mb-10">
+    <ol className="flex items-center gap-2 sm:gap-3 w-full">
+      {steps.map((label, i) => {
+        const done = i < step;
+        const current = i === step;
+        const last = i === steps.length - 1;
+        return (
+          <li
+            key={label}
+            className={`flex items-center gap-2 sm:gap-3 ${last ? '' : 'flex-1'}`}
+            aria-current={current ? 'step' : undefined}
           >
-            {done ? <CheckIcon className="w-3.5 h-3.5" /> : i + 1}
-          </div>
-          <span
-            className={`text-xs font-medium hidden sm:block ${
-              current ? 'text-[#1A1614]' : done ? 'text-[#6B6560]' : 'text-muted'
-            }`}
-          >
-            {label}
-          </span>
-          {i < STEPS.length - 1 && (
-            <div className={`h-px w-6 md:w-12 ${done ? 'bg-[#8B0000]/50' : 'bg-[#1A1614]/[0.12]'}`} />
-          )}
-        </li>
-      );
-    })}
-  </ol>
+            <span
+              aria-hidden="true"
+              className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-display font-medium text-[14px] transition-colors duration-300 ${
+                done ? 'bg-sage/10 text-sage'
+                : current ? 'bg-ink text-white'
+                : 'border border-ink/15 text-muted'
+              }`}
+            >
+              {done ? <TickIcon className="w-4 h-4" /> : i + 1}
+            </span>
+            <span className="sr-only">
+              Step {i + 1}: {label}{done ? ', done' : current ? ', current' : ''}
+            </span>
+            <span
+              aria-hidden="true"
+              className={`type-caption whitespace-nowrap hidden md:block ${current ? 'text-ink font-medium' : 'text-muted'}`}
+            >
+              {label}
+            </span>
+            {!last && (
+              <span aria-hidden="true" className={`h-px flex-1 min-w-3 ${done ? 'bg-sage/40' : 'bg-ink/15'}`} />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+    <p aria-hidden="true" className="md:hidden mt-3 type-caption text-muted">
+      Step {step + 1} of {steps.length}: <span className="text-ink font-medium">{steps[step]}</span>
+    </p>
+  </nav>
 );

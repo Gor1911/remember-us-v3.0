@@ -1,5 +1,9 @@
+import Image from 'next/image';
 import Link from 'next/link';
+import { SITE_HOST, canOptimizeImage } from '@/app/lib/config';
 import type { MemorialPageListItem } from '@/app/lib/types';
+import { QrIcon } from '@/components/ui/icons';
+import { BTN_SM, BTN_SM_DARK, BTN_SM_SOFT, CARD } from '@/components/ui/styles';
 import { StatePill } from './StatePill';
 import { TypeIcon } from './Icons';
 import { ExportArchiveButton } from './ExportArchiveButton';
@@ -24,10 +28,7 @@ interface MemorialCardProps {
   onChanged?: () => void;
 }
 
-const btn =
-  'flex-1 min-w-[7.5rem] px-2 flex items-center justify-center py-2.5 text-center text-xs font-medium rounded-[12px] transition-colors no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]';
-const outline = `${btn} text-[#1A1614] bg-transparent border border-[#1A1614]/20 hover:bg-[#F3F0EB]`;
-const primary = `${btn} bg-[#8B0000] text-white hover:bg-[#A00000] disabled:opacity-50`;
+const TAG = 'inline-flex items-center gap-1 rounded-full bg-soft px-2.5 py-0.5 type-utility font-medium text-ink';
 
 export const MemorialCard = ({
   page, showOwner, isOwner, isAdmin, busy, onSubmit, onChoosePlan, onAccess, onChanged,
@@ -36,94 +37,102 @@ export const MemorialCard = ({
   const paid = !!page.is_paid;
   const premium = page.package_type === 'premium';
   const portrait = page.portrait_animation_status ?? 'none';
+  /** Guests still see the approved version while newer changes wait. */
+  const liveWithChanges = page.state !== 'active' && !!page.has_published_version;
+  const canEdit = (isOwner || isAdmin) && !!page.slug;
 
   return (
-    <div className="memorial-card glass rounded-[24px] p-6 flex flex-col gap-4 hover:bg-white/90 transition-colors duration-200">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1 min-w-0">
-          <span className="flex items-center gap-1.5 text-[10px] text-muted uppercase tracking-widest font-medium mb-1">
-            <TypeIcon type={page.page_type} className="w-3.5 h-3.5" />
-            {page.page_type === 'military' ? 'Military' : 'Civilian'}
-          </span>
-          <h3 className="text-[#1A1614] font-semibold text-base leading-tight break-words">
+    <div className={`memorial-card ${CARD} flex flex-col gap-4`}>
+      <div className="flex items-start gap-4">
+        <div className="relative shrink-0 w-16 h-16 rounded-[14px] overflow-hidden bg-soft flex items-center justify-center text-bronze">
+          {page.primary_portrait ? (
+            <Image src={page.primary_portrait} alt="" fill unoptimized={!canOptimizeImage(page.primary_portrait)} sizes="64px" className="object-cover object-center" />
+          ) : (
+            <TypeIcon type={page.page_type} className="w-7 h-7" />
+          )}
+        </div>
+        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+          <h3 className="type-panel-heading text-ink break-words">
             {page.first_name} {page.last_name}
           </h3>
-          <p className="text-[#6B6560] text-xs font-mono">
+          <p className="type-caption text-muted tabular-nums">
             {year(page.birth_date)} — {year(page.death_date)}
           </p>
           {showOwner && (
-            <p className="text-muted text-xs mt-1 truncate">Owner: {page.owner.display_name || page.owner.email || 'Unknown'}</p>
-          )}
-        </div>
-        <div className="flex flex-col items-end gap-1.5">
-          <StatePill state={page.state} />
-          {page.package_type && (
-            <span className="text-[10px] font-medium px-2.5 py-1 rounded-full border border-[#1A1614]/10 bg-white text-[#1A1614]">
-              {page.package_type === 'premium' ? 'Premium' : 'Standard'}
-            </span>
+            <p className="type-caption text-muted truncate">Owner: {page.owner.display_name || page.owner.email || 'Unknown'}</p>
           )}
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-1.5">
+        {liveWithChanges ? (
+          <>
+            <StatePill state="active" />
+            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 type-utility font-medium bg-amber-deep/10 text-amber-deep">
+              {page.state === 'moderation' ? 'Changes in review' : 'Changes not sent yet'}
+            </span>
+          </>
+        ) : (
+          <StatePill state={page.state} />
+        )}
+        <span className={TAG}>
+          <TypeIcon type={page.page_type} className="w-3.5 h-3.5 text-bronze" />
+          {page.page_type === 'military' ? 'Military' : 'Civilian'}
+        </span>
+        {page.package_type && <span className={TAG}>{premium ? 'Premium' : 'Standard'}</span>}
+      </div>
+
       {premium && portrait !== 'none' && (
-        <p className="text-xs text-[#1A1614]">
-          Living Portrait: <span className="text-[#6B6560]">{PORTRAIT_STATUS_LABEL[portrait]}</span>
+        <p className="type-caption text-ink">
+          Living Portrait: <span className="text-muted">{PORTRAIT_STATUS_LABEL[portrait]}</span>
         </p>
       )}
 
       {page.hidden && (
-        <div className="rounded-[12px] bg-[#8B0000]/[0.06] border border-[#8B0000]/15 px-3 py-2">
-          <p className="text-xs text-[#8B0000] font-medium">
-            Hidden by administrator{page.hidden_reason ? `: ${page.hidden_reason}` : ''}
-          </p>
-        </div>
-      )}
-
-      {isDraft && page.moderation_note && (
-        <div className="rounded-[12px] bg-[#8B0000]/[0.06] border border-[#8B0000]/15 px-3 py-2">
-          <p className="text-[10px] uppercase tracking-widest text-[#8B0000] font-medium mb-0.5">Changes requested</p>
-          <p className="text-xs text-[#1A1614] leading-relaxed">{page.moderation_note}</p>
-        </div>
-      )}
-
-      <div className="h-px bg-[#1A1614]/[0.08]" />
-
-      {page.slug && (
-        <p className="text-xs truncate">
-          <span className="text-muted">remember.us/</span>
-          <span className="text-[#6B6560] font-mono">{page.slug}</span>
+        <p className="rounded-[14px] bg-danger/[0.08] px-3.5 py-2.5 type-caption font-medium text-danger">
+          Hidden by administrator{page.hidden_reason ? `: ${page.hidden_reason}` : ''}
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2 mt-1">
+      {isDraft && page.moderation_note && (
+        <div className="rounded-[14px] bg-amber-deep/10 px-3.5 py-2.5">
+          <p className="type-caption font-medium text-amber-deep">Changes requested</p>
+          <p className="type-caption text-ink">{page.moderation_note}</p>
+        </div>
+      )}
+
+      {page.slug && (
+        <p className="type-caption truncate border-t border-ink/10 pt-4">
+          <span className="text-muted">{SITE_HOST}/</span>
+          <span className="text-ink font-mono text-[13px]">{page.slug}</span>
+        </p>
+      )}
+
+      <div className="flex flex-wrap gap-2">
         {page.slug ? (
-          <Link href={`/${page.slug}`} className={`${btn} text-[#1A1614] bg-white border border-[#1A1614]/10 hover:bg-[#F3F0EB]`}>
-            View
-          </Link>
+          <Link href={`/${page.slug}`} className={`${BTN_SM_SOFT} no-underline`}>View</Link>
         ) : (
-          <span aria-disabled="true" className={`${btn} text-muted bg-[#1A1614]/[0.04] cursor-not-allowed`}>Unavailable</span>
+          <span aria-disabled="true" className={`${BTN_SM} bg-ink/[0.04] text-muted cursor-not-allowed`}>Unavailable</span>
+        )}
+        {canEdit && (
+          <Link href={`/memorial/${page.slug}/edit`} className={`${BTN_SM_SOFT} no-underline`}>Edit</Link>
         )}
 
         {isDraft && isOwner && page.slug && !isAdmin && !paid && onChoosePlan && (
-          <button type="button" onClick={() => onChoosePlan(page)} className={primary}>Choose plan &amp; submit</button>
+          <button type="button" onClick={() => onChoosePlan(page)} className={BTN_SM_DARK}>Choose plan &amp; submit</button>
         )}
         {isDraft && isOwner && page.slug && (isAdmin || paid) && onSubmit && (
-          <button type="button" disabled={busy} onClick={() => onSubmit(page.slug)} className={primary}>
+          <button type="button" disabled={busy} onClick={() => onSubmit(page.slug)} className={BTN_SM_DARK}>
             {busy ? 'Submitting…' : paid && !isAdmin ? 'Resubmit for review' : 'Submit for review'}
           </button>
         )}
 
         {(isOwner || isAdmin) && (
-          <button
-            type="button"
-            disabled={!page.slug}
-            onClick={() => onAccess?.(page.slug)}
-            className={`${outline} disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            Link &amp; QR code
+          <button type="button" disabled={!page.slug} onClick={() => onAccess?.(page.slug)} className={BTN_SM_SOFT}>
+            <QrIcon className="w-4 h-4" /> Link &amp; QR code
           </button>
         )}
-        {page.slug && <ExportArchiveButton slug={page.slug} className={btn} />}
+        {page.slug && <ExportArchiveButton slug={page.slug} />}
       </div>
 
       {isAdmin && page.slug && onChanged && <AdminCardTools page={page} onChanged={onChanged} />}

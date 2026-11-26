@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { SparkIcon } from '@/components/ui/icons';
+import { FOCUS } from '@/components/ui/styles';
 
 interface LivingPortraitPlayerProps {
   /** Primary video source (webm or mp4). */
@@ -18,6 +20,10 @@ interface LivingPortraitPlayerProps {
   className?: string;
   /** Skip Next image optimisation (signed / remote URLs). */
   unoptimized?: boolean;
+  /** Position classes for the pause/play control (default: bottom-left corner). */
+  controlClassName?: string;
+  /** `sizes` hint for the poster image. */
+  sizes?: string;
 }
 
 const PauseIcon = () => (
@@ -45,6 +51,7 @@ const mimeFor = (url: string): string => {
  */
 export function LivingPortraitPlayer({
   src, altSrc, poster, label, badge, className = 'object-cover object-center', unoptimized = false,
+  controlClassName = 'bottom-3 left-3', sizes = '288px',
 }: LivingPortraitPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const userPaused = useRef(false);
@@ -85,7 +92,7 @@ export function LivingPortraitPlayer({
   return (
     <>
       {poster && (
-        <Image src={poster} alt="" fill sizes="288px" aria-hidden="true" unoptimized={unoptimized} className={className} />
+        <Image src={poster} alt="" fill sizes={sizes} aria-hidden="true" unoptimized={unoptimized} className={className} />
       )}
       {!failed && (
         <video
@@ -110,14 +117,14 @@ export function LivingPortraitPlayer({
           type="button"
           onClick={toggle}
           aria-label={playing ? 'Pause animation' : 'Play animation'}
-          aria-pressed={!playing}
-          className="absolute bottom-3 left-3 z-10 flex motion-reduce:hidden h-11 w-11 items-center justify-center rounded-full border border-[#1A1614]/15 bg-white/90 text-[#1A1614] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]"
+          className={`absolute ${controlClassName} z-10 flex motion-reduce:hidden h-11 w-11 items-center justify-center rounded-full bg-white/90 text-ink backdrop-blur-sm shadow-control transition-colors hover:bg-white ${FOCUS}`}
         >
           {playing ? <PauseIcon /> : <PlayIcon />}
         </button>
       )}
       {badge && !failed && (
-        <span className="absolute top-3 right-3 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-[#1A1614] backdrop-blur-sm motion-reduce:hidden">
+        <span className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/90 pl-2 pr-3 py-1 type-utility font-medium text-ink whitespace-nowrap backdrop-blur-sm shadow-control motion-reduce:hidden">
+          <SparkIcon className="w-3.5 h-3.5 text-bronze" />
           {badge}
         </span>
       )}

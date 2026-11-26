@@ -4,36 +4,44 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/hooks/useAuth';
-import { ArrowLeftIcon, ArrowRightIcon } from '@/components/dashboard/Icons';
-import { BasicInfoStep } from '@/components/memorial-form/BasicInfoStep';
-import { Field, Textarea } from '@/components/memorial-form/FormFields';
-import { PhotoStep } from '@/components/memorial-form/PhotoStep';
-import { PlanStep } from '@/components/memorial-form/PlanStep';
-import { ReviewStep } from '@/components/memorial-form/ReviewStep';
-import { StepProgress } from '@/components/memorial-form/StepProgress';
+import { ArrowIcon } from '@/components/ui/icons';
+import { FOCUS, LINK, NOTICE_INFO, PAGE } from '@/components/ui/styles';
+import { MemorialFormFlow } from '@/components/memorial-form/MemorialFormFlow';
 import { SuccessScreen } from '@/components/memorial-form/SuccessScreen';
+import { useDraftAutosave } from '@/components/memorial-form/useDraftAutosave';
 import { useMemorialForm } from '@/components/memorial-form/useMemorialForm';
-import { MIN_BIOGRAPHY_LENGTH, type Step } from '@/components/memorial-form/formTypes';
+import { EMPTY_FORM, PREVIEW_STEP } from '@/components/memorial-form/formTypes';
 
-const PRIMARY =
-  'inline-flex items-center gap-2 whitespace-nowrap px-8 py-3 bg-[#8B0000] hover:bg-[#A00000] text-white text-sm font-medium rounded-[14px] transition-colors disabled:bg-[#1A1614]/10 disabled:text-[#8A7F74] disabled:cursor-not-allowed';
+/** Form column; the preview step widens to the memorial's own width. */
+const COLUMN = 'w-[min(100%-32px,720px)] mx-auto';
+const WIDE = 'w-[min(100%-32px,1064px)] mx-auto';
+
+const savedTime = (t: number) =>
+  new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 export default function NewMemorialPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const isAdmin = user?.role === 'admin';
   const f = useMemorialForm(isAdmin);
-  const { step, setStep, form, photos, portrait } = f;
+  const { form, photos, portrait } = f;
+  // Keep unsent text in this browser until the draft exists on the server.
+  const autosave = useDraftAutosave(form, f.setForm, !f.draftSlug && !f.created);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) router.replace('/');
   }, [loading, isAuthenticated, router]);
 
+  useEffect(() => {
+    if (f.draftSlug || f.created) autosave.clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.draftSlug, f.created]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
-        <span className="text-[#6B6560] text-sm">Loading…</span>
-      </div>
+      <main id="main" className="min-h-screen bg-canvas flex items-center justify-center">
+        <span className="type-caption text-muted" role="status">Loading…</span>
+      </main>
     );
   }
 
@@ -49,103 +57,44 @@ export default function NewMemorialPage() {
     );
   }
 
-  const plural = photos.length > 1 ? 's' : '';
-  const nextLabel = step === 2
-    ? (photos.length > 0 ? `Continue with ${photos.length} photo${plural}` : 'Skip Gallery')
-    : 'Continue';
-
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-[#1A1614]">
-      <div className="site-container py-12 md:py-20 max-w-2xl mx-auto">
+    <main id="main" className={PAGE}>
+      <div className={f.step === PREVIEW_STEP ? WIDE : COLUMN}>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-[#6B6560] hover:text-[#1A1614] text-sm transition-colors no-underline mb-10"
+          className={`inline-flex items-center gap-2 min-h-11 type-caption font-medium text-muted hover:text-ink transition-colors no-underline mb-6 rounded-sm ${FOCUS}`}
         >
-          <ArrowLeftIcon /> Dashboard
+          <ArrowIcon direction="left" className="w-4 h-4" /> My memorials
         </Link>
 
-        <div className="flex items-center gap-2.5 mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-          <span className="uppercase text-[#6B6560] text-[11px] tracking-[0.12em] font-medium">New Memorial</span>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 mb-8">
+          <h1 className="type-footer-heading text-ink">Create a memorial</h1>
+          {autosave.savedAt && !f.draftSlug && (
+            <p className="type-caption text-muted" role="status">Saved on this device</p>
+          )}
         </div>
-        <h1 className="text-[#1A1614] font-bold text-3xl md:text-4xl tracking-tight mb-8">Create Memorial</h1>
 
-        <StepProgress step={step} />
-
-        {step === 0 && (
-          <BasicInfoStep
-            form={form} onChange={f.set} dateErrors={f.dateErrors}
-            portrait={portrait} onPortraitSelect={f.setPortrait} onPortraitRemove={() => f.setPortrait(null)}
-          />
-        )}
-
-        {step === 1 && (
-          <div className="glass rounded-[32px] p-6 md:p-10 flex flex-col gap-4">
-            <Field label="Biography" htmlFor="biography" hint={`Minimum ${MIN_BIOGRAPHY_LENGTH} characters. Tell the story of their life.`}>
-              <Textarea
-                id="biography" value={form.biography} placeholder="Write a biography here…"
-                onChange={(v) => f.set('biography', v)}
-              />
-            </Field>
-            <span className={`self-end text-xs ${form.biography.trim().length < MIN_BIOGRAPHY_LENGTH ? 'text-[#6B6560]' : 'text-[#8B0000]'}`}>
-              {form.biography.length} chars
+        {autosave.restoredAt && (
+          <div className={`${NOTICE_INFO} mb-6 flex flex-wrap items-center justify-between gap-3`} role="status">
+            <span>
+              We kept what you wrote on {savedTime(autosave.restoredAt)}. Photos need to be added again.
+            </span>
+            <span className="flex gap-4">
+              <button type="button" className={`type-caption font-medium ${LINK}`} onClick={autosave.dismissRestored}>
+                Continue
+              </button>
+              <button
+                type="button" className={`type-caption font-medium ${LINK}`}
+                onClick={() => { autosave.clear(); f.setForm(EMPTY_FORM); f.setStep(0); }}
+              >
+                Start over
+              </button>
             </span>
           </div>
         )}
 
-        {step === 2 && (
-          <div className="glass rounded-[32px] p-6 md:p-10">
-            <div className="flex items-center gap-2.5 mb-6">
-              <span className="w-1 h-1 rounded-full bg-[#8B0000]" />
-              <span className="text-[#6B6560] text-[11px] uppercase tracking-wider font-medium">
-                {photos.length > 0 ? `${photos.length} gallery photo${plural} selected` : 'Gallery Photos'}
-              </span>
-            </div>
-            <PhotoStep photos={photos} onAdd={f.addPhotos} onRemove={f.removePhoto} />
-          </div>
-        )}
-
-        {step === 3 && (
-          <ReviewStep form={form} portrait={portrait} photos={photos} apiError={f.apiError} uploadStatus={f.uploadStatus} />
-        )}
-
-        {step === 4 && f.draftSlug && <PlanStep slug={f.draftSlug} warning={f.draftWarning} />}
-
-        {step < 4 && (
-        <div className="flex justify-between mt-6 gap-3">
-          <button
-            type="button"
-            onClick={() => setStep((s) => Math.max(0, s - 1) as Step)}
-            disabled={step === 0 || f.submitting}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-[#1A1614]/10 text-[#1A1614] hover:bg-[#F3F0EB] disabled:opacity-0 disabled:pointer-events-none text-sm font-medium rounded-[14px] transition-colors"
-          >
-            <ArrowLeftIcon /> Back
-          </button>
-
-          {step < 3 ? (
-            <button
-              type="button"
-              onClick={() => setStep((s) => (s + 1) as Step)}
-              disabled={!f.canNext}
-              className={PRIMARY}
-            >
-              {nextLabel} <ArrowRightIcon />
-            </button>
-          ) : (
-            <button type="button" onClick={f.create} disabled={f.submitting} className={PRIMARY}>
-              {f.submitting ? (
-                <>
-                  <span className="w-3.5 h-3.5 border border-white/40 border-t-white rounded-full animate-spin" />
-                  {f.uploadStatus || 'Creating…'}
-                </>
-              ) : (
-                <>{isAdmin ? 'Submit for review' : 'Create draft and choose plan'} <ArrowRightIcon /></>
-              )}
-            </button>
-          )}
-        </div>
-        )}
+        <MemorialFormFlow f={f} mode="create" isAdmin={isAdmin} />
       </div>
-    </div>
+    </main>
   );
 }

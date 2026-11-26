@@ -1,9 +1,7 @@
 import Link from 'next/link';
+import { CheckIcon, ClockIcon } from '@/components/ui/icons';
+import { BTN_PRIMARY, BTN_SECONDARY, CARD } from '@/components/ui/styles';
 import type { PollState } from './usePaymentPolling';
-
-const LINK_BTN =
-  'inline-flex px-6 py-3 rounded-[14px] text-sm font-medium no-underline transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]';
-const PRIMARY = `${LINK_BTN} bg-[#8B0000] text-white hover:bg-[#A00000]`;
 
 interface MessageProps {
   title: string;
@@ -12,9 +10,26 @@ interface MessageProps {
 
 const Message = ({ title, body }: MessageProps) => (
   <>
-    <h1 className="text-[#1A1614] font-bold text-3xl tracking-tight">{title}</h1>
-    {body && <p className="text-muted text-base leading-relaxed max-w-md">{body}</p>}
+    <h1 className="type-heading text-ink text-balance">{title}</h1>
+    {body && <p className="type-body text-muted max-w-md">{body}</p>}
   </>
+);
+
+interface BadgeProps {
+  tone: 'sage' | 'bronze';
+  children: React.ReactNode;
+}
+
+/** Round icon badge above the heading. */
+const Badge = ({ tone, children }: BadgeProps) => (
+  <span
+    aria-hidden="true"
+    className={`w-16 h-16 rounded-full flex items-center justify-center ${
+      tone === 'sage' ? 'bg-sage/10 text-sage' : 'bg-soft text-bronze'
+    }`}
+  >
+    {children}
+  </span>
 );
 
 interface SuccessViewProps {
@@ -25,7 +40,7 @@ export const SuccessView = ({ state }: SuccessViewProps) => {
   if (state.kind === 'checking') {
     return (
       <>
-        <span className="w-2 h-2 rounded-full bg-[#8B0000] animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+        <span className="w-8 h-8 border-2 border-ink/15 border-t-bronze rounded-full animate-spin motion-reduce:animate-none" aria-hidden="true" />
         <Message title="Confirming your payment…" body="Please keep this page open. This usually takes a few seconds." />
       </>
     );
@@ -36,18 +51,19 @@ export const SuccessView = ({ state }: SuccessViewProps) => {
     const name = `${session.page.first_name} ${session.page.last_name}`.trim();
     return (
       <>
+        <Badge tone="sage"><CheckIcon className="w-8 h-8" /></Badge>
         <Message
-          title="Payment confirmed"
-          body={`Your memorial for ${name} is now with our team for review — usually within 24 hours.`}
+          title={name ? `${name}’s memorial is on its way` : 'Your memorial is on its way'}
+          body="Payment received. Our team reads every memorial before it is shared — usually within 24 hours."
         />
         {session.package === 'premium' && (
-          <p className="text-muted text-base leading-relaxed max-w-md">
+          <p className="type-body text-muted max-w-md">
             Your Living Portrait will be ready within 24 hours of approval, once a clear portrait photo is provided.
           </p>
         )}
-        <section aria-labelledby="next-heading" className="glass rounded-[32px] p-6 text-left w-full max-w-md">
-          <h2 id="next-heading" className="text-[#1A1614] font-semibold text-lg mb-3">What happens next</h2>
-          <ol className="list-decimal pl-5 flex flex-col gap-2 text-muted text-[15px] leading-relaxed">
+        <section aria-labelledby="next-heading" className={`${CARD} text-left w-full`}>
+          <h2 id="next-heading" className="type-panel-heading text-ink mb-3">What happens next</h2>
+          <ol className="list-decimal pl-5 flex flex-col gap-2 type-body text-muted marker:text-bronze-deep">
             <li>We review your memorial.</li>
             <li>You receive the private link and QR code in your dashboard.</li>
             {session.package === 'premium' && (
@@ -55,7 +71,10 @@ export const SuccessView = ({ state }: SuccessViewProps) => {
             )}
           </ol>
         </section>
-        <Link href="/dashboard" className={PRIMARY}>Go to your dashboard</Link>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link href="/dashboard" className={BTN_PRIMARY}>Go to my memorials</Link>
+          <Link href={`/${session.page.slug}`} className={BTN_SECONDARY}>Read it once more</Link>
+        </div>
       </>
     );
   }
@@ -69,8 +88,8 @@ export const SuccessView = ({ state }: SuccessViewProps) => {
     return (
       <>
         <Message title="Payment not completed" body={body} />
-        <p className="text-muted text-base">Return to your dashboard to try again.</p>
-        <Link href="/dashboard" className={PRIMARY}>Go to your dashboard</Link>
+        <p className="type-body text-muted">Return to your dashboard to try again.</p>
+        <Link href="/dashboard" className={BTN_PRIMARY}>Go to your dashboard</Link>
       </>
     );
   }
@@ -78,11 +97,12 @@ export const SuccessView = ({ state }: SuccessViewProps) => {
   if (state.kind === 'timeout') {
     return (
       <>
+        <Badge tone="bronze"><ClockIcon className="w-8 h-8" /></Badge>
         <Message
           title="Still waiting"
           body="We haven't received confirmation yet. This can take a minute — refresh, or check your dashboard."
         />
-        <Link href="/dashboard" className={PRIMARY}>Check your dashboard</Link>
+        <Link href="/dashboard" className={BTN_PRIMARY}>Check your dashboard</Link>
       </>
     );
   }
@@ -90,7 +110,7 @@ export const SuccessView = ({ state }: SuccessViewProps) => {
   return (
     <>
       <Message title="We couldn't find this payment" body="Check your dashboard for the status of your memorial." />
-      <Link href="/dashboard" className={PRIMARY}>Go to your dashboard</Link>
+      <Link href="/dashboard" className={BTN_PRIMARY}>Go to your dashboard</Link>
     </>
   );
 };

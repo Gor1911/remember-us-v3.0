@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { reports } from '@/app/lib/api';
 import type { MemorialPageListItem } from '@/app/lib/types';
 import { PortraitTools } from './PortraitTools';
-import { BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY, BTN_SM, FIELD } from './styles';
+import { BTN_SM_DANGER, BTN_SM_SOFT, ERROR_TEXT, EYEBROW, FIELD, LABEL } from '@/components/ui/styles';
 
 interface AdminCardToolsProps {
   page: MemorialPageListItem;
@@ -36,17 +36,17 @@ export const AdminCardTools = ({ page, onChanged }: AdminCardToolsProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-3 border-t border-[#1A1614]/[0.08] pt-3">
-      <p className="text-[10px] uppercase tracking-widest text-muted font-medium">Admin tools</p>
+    <div className="flex flex-col gap-3 border-t border-ink/10 pt-4">
+      <p className={EYEBROW}>Admin tools</p>
       <div className="flex flex-wrap gap-2">
         {page.hidden ? (
-          <button type="button" disabled={busy} onClick={() => void unhide()} className={`${BTN_SECONDARY} !px-4 !py-2 !text-xs !rounded-[12px]`}>
+          <button type="button" disabled={busy} onClick={() => void unhide()} className={BTN_SM_SOFT}>
             {busy ? 'Working…' : 'Unhide page'}
           </button>
         ) : (
           <button
             type="button" disabled={busy} aria-expanded={hiding} onClick={() => setHiding((v) => !v)}
-            className={`${BTN_DANGER} !px-4 !py-2 !text-xs !rounded-[12px]`}
+            className={BTN_SM_DANGER}
           >
             Hide page
           </button>
@@ -55,7 +55,7 @@ export const AdminCardTools = ({ page, onChanged }: AdminCardToolsProps) => {
 
       {hiding && !page.hidden && (
         <div className="flex flex-col gap-2">
-          <label htmlFor={`hide-${page.id}`} className="text-[11px] uppercase tracking-widest text-[#6B6560] font-medium">
+          <label htmlFor={`hide-${page.id}`} className={LABEL}>
             Reason (required)
           </label>
           <textarea
@@ -63,14 +63,14 @@ export const AdminCardTools = ({ page, onChanged }: AdminCardToolsProps) => {
             className={`${FIELD} resize-none`}
           />
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setHiding(false)} className={`${BTN_SM} text-[#6B6560] hover:text-[#1A1614]`}>Cancel</button>
-            <button type="button" disabled={busy} onClick={() => void hide()} className={`${BTN_PRIMARY} !px-4 !py-2 !text-xs !rounded-[12px]`}>
+            <button type="button" onClick={() => setHiding(false)} className={BTN_SM_SOFT}>Cancel</button>
+            <button type="button" disabled={busy} onClick={() => void hide()} className={BTN_SM_DANGER}>
               {busy ? 'Hiding…' : 'Confirm: Hide page'}
             </button>
           </div>
         </div>
       )}
-      <p role="alert" className="text-[#8B0000] text-xs empty:hidden">{error}</p>
+      <p role="alert" className={`${ERROR_TEXT} empty:hidden`}>{error}</p>
 
       {page.package_type === 'premium' && <PortraitTools page={page} onChanged={onChanged} />}
     </div>

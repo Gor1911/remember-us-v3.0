@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import { pages } from '@/app/lib/api';
+import { DownloadIcon } from '@/components/ui/icons';
+import { BTN_SM_SOFT, ERROR_TEXT } from '@/components/ui/styles';
 
 interface ExportArchiveButtonProps {
   slug: string;
+  /** Button classes; defaults to the compact soft capsule. */
   className?: string;
 }
 
-export const ExportArchiveButton = ({ slug, className = '' }: ExportArchiveButtonProps) => {
+export const ExportArchiveButton = ({ slug, className = BTN_SM_SOFT }: ExportArchiveButtonProps) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -38,14 +41,12 @@ export const ExportArchiveButton = ({ slug, className = '' }: ExportArchiveButto
         disabled={busy}
         onClick={onClick}
         aria-busy={busy}
-        className={`${className} flex items-center justify-center gap-1.5 text-[#1A1614] bg-transparent border border-[#1A1614]/20 hover:bg-[#F3F0EB] disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]`}
+        className={className}
       >
-        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />
-        </svg>
+        <DownloadIcon className="w-4 h-4" />
         {busy ? 'Preparing…' : 'Download archive'}
       </button>
-      <p role="alert" className="basis-full text-[#8B0000] text-xs empty:hidden">{error}</p>
+      <p role="alert" className={`${ERROR_TEXT} basis-full empty:hidden`}>{error}</p>
     </>
   );
 };

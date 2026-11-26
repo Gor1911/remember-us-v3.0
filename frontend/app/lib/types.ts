@@ -104,6 +104,8 @@ export interface MemorialPageListItem {
   portrait_animation_status?: PortraitStatus;
   hidden?: boolean;
   hidden_reason?: string;
+  /** Owner/admin only: an approved version exists, so guests keep seeing it while edits are reviewed. */
+  has_published_version?: boolean;
 }
 
 export interface MemorialPageDetail extends MemorialPageListItem {
@@ -146,6 +148,22 @@ export interface CreatePagePayload {
   military_branch?: string;
   service_start?: string;
   service_end?: string;
+  /** When present, replaces all timeline entries; order = position in the list. */
+  timeline_entries?: TimelineEntryPayload[];
+  /** When present, replaces all awards; order = position in the list. */
+  military_awards?: MilitaryAwardPayload[];
+}
+
+export interface TimelineEntryPayload {
+  year: number;
+  title: string;
+  description: string;
+}
+
+export interface MilitaryAwardPayload {
+  name: string;
+  description: string;
+  awarded_date: string | null;
 }
 
 export type UpdatePagePayload = Partial<Omit<CreatePagePayload, 'page_type'>>;

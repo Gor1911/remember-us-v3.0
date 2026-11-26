@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { QrIcon } from '@/components/ui/icons';
+import { LINK } from '@/components/ui/styles';
 import { access } from '@/app/lib/api';
 
 export default function QrResolvePage() {
@@ -23,28 +25,23 @@ export default function QrResolvePage() {
   }, [token, router]);
 
   return (
-    <main className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center px-6 text-center">
+    <main id="main" className="min-h-screen bg-canvas text-ink flex flex-col items-center justify-center px-4 py-16 text-center">
       {failed ? (
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000]" />
-            <span className="text-muted text-[11px] uppercase tracking-[0.14em] font-medium">Remember US</span>
-          </div>
-          <h1 className="text-[#1A1614] font-bold text-3xl tracking-tight">This QR code is not active</h1>
-          <p className="text-muted text-sm max-w-sm leading-relaxed">
-            If you believe this is a mistake, please contact the family who shared it.
+        <div className="w-full max-w-[440px] bg-white rounded-[24px] p-8 shadow-card flex flex-col items-center gap-5">
+          <span className="grid place-items-center w-14 h-14 rounded-full bg-soft text-bronze" aria-hidden="true">
+            <QrIcon className="w-7 h-7" />
+          </span>
+          <h1 className="type-card-heading text-balance">This memorial can’t be opened right now</h1>
+          <p className="type-body text-muted text-pretty">
+            The family may have paused this code, or the memorial is still being prepared. If you know the
+            family, they can check it from their account.
           </p>
-          <Link
-            href="/"
-            className="px-6 py-3 bg-white border border-[#1A1614]/10 text-muted hover:text-[#1A1614] text-sm rounded-[14px] transition-colors no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]"
-          >
-            ← Return to Remember US
-          </Link>
+          <Link href="/" className={`type-caption mt-1 ${LINK}`}>What is Remember US?</Link>
         </div>
       ) : (
         <div role="status" aria-live="polite" className="flex flex-col items-center gap-4">
-          <span className="w-2 h-2 rounded-full bg-[#8B0000] animate-pulse motion-reduce:animate-none" aria-hidden="true" />
-          <p className="text-muted text-sm">Opening memorial…</p>
+          <span className="w-2 h-2 rounded-full bg-bronze animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+          <p className="type-caption text-muted">Opening the memorial…</p>
         </div>
       )}
     </main>

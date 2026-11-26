@@ -1,95 +1,337 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* === Colors === */
-  --color-background: #FAF8F5;
-  --color-surface: #FFFFFF;
-  --color-border: #E8E3DB;
+  /* === Warm stone palette (landing & shared chrome) === */
+  --color-ink: #2b2724;            /* primary lettering, dark capsule, footer band */
+  --color-canvas: #fbf9f5;         /* ivory page canvas */
+  --color-soft: #f3eee6;           /* tiles on canvas */
+  --color-sand: #efe8de;           /* alternate chapters */
+  --color-bronze: #9a7b55;         /* icons & decoration only (3.7:1 — not for small text) */
+  --color-bronze-deep: #7a5f3f;    /* accent text, focus ring (AA on all light surfaces) */
+  --color-linen: #d6cfc6;          /* text and focus ring on the ink surface (9.6:1) */
+  --color-muted: #6b6560;          /* secondary text (AA on all light surfaces) */
 
-  --color-text-primary: #1A1614;
-  --color-text-muted: #6B6560;
-  --color-aluminum: #8A7F74;
-  /* AA-safe muted text for small copy (>=5:1 on cream surfaces) */
-  --color-muted: #6B6560;
+  /* Status & semantic (all AA on white / canvas / sand) */
+  --color-danger: #9a3324;         /* destructive actions, errors */
+  --color-sage: #3f6b4f;           /* published / success */
+  --color-amber-deep: #8a5a12;     /* in review / pending */
+  --color-navy: #1b2d4e;           /* military memorial accent (Liberty Blue) */
+  --color-honor: #8b0000;          /* military badge only (Honor Red) — never a button */
 
-  /* Military */
-  --color-military-bg: #F0EDE8;
-  --color-liberty-blue: #1B2D4E;
-  --color-honor-red: #8B0000;
-  --color-titanium: #8A7F74;
+  --font-display: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  --font-sans: var(--font-text-face), "Inter", Arial, sans-serif;
 
-  /* Typography */
-  --font-sans: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --radius-tile: 20px;
 
-  /* Radius */
-  --radius-card: 32px;
-  --radius-btn: 14px;
+  /* === Warm shadows (ink-tinted; only floating objects get them) === */
+  --shadow-hairline: 0 1px 0 rgb(43 39 36 / 0.08);   /* header under-line once scrolled */
+  --shadow-chip: 0 1px 3px rgb(43 39 36 / 0.12);     /* active segment in a switch */
+  --shadow-control: 0 4px 12px rgb(43 39 36 / 0.15); /* small round buttons over photos */
+  --shadow-badge: 0 8px 24px rgb(43 39 36 / 0.12);   /* floating chips and badges */
+  --shadow-float: 0 16px 40px rgb(43 39 36 / 0.18);  /* hero cards, portrait */
+  --shadow-card: 0 20px 60px rgb(43 39 36 / 0.10);   /* white cards and QR plates on canvas */
+  --shadow-frame: 0 30px 80px rgb(43 39 36 / 0.16);  /* framed living portrait */
+  --shadow-dialog: 0 30px 80px rgb(43 39 36 / 0.25); /* modal dialogs */
+  --shadow-device: 0 40px 90px rgb(43 39 36 / 0.35); /* the hero phone */
 }
 
 @layer base {
   * {
     box-sizing: border-box;
-    margin:0;
+    margin: 0;
     padding: 0;
+  }
+  /* No single word stranded on a paragraph's last line; headings use text-balance where they need it. */
+  p, li, dd, figcaption {
+    text-wrap: pretty;
   }
 }
 
 html {
   scroll-behavior: smooth;
+  /* clip, not hidden: hidden turns the element into a scroll container and breaks position: sticky */
+  overflow-x: clip;
 }
 
 body {
-  background: #FAF8F5;
-  color: #1A1614;
-  font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  background: --theme(--color-canvas inline);
+  color: --theme(--color-ink inline);
+  font-family: --theme(--font-sans inline);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  /* The self-hosted variable fonts carry an optical-size axis; keep the default (text) design at every
+     size so headings look exactly as they did with Google-hosted fonts. */
+  font-optical-sizing: none;
+  overflow-x: clip;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #FAF8F5; }
-::-webkit-scrollbar-thumb { background: #D4CFC8; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #8A7F74; }
+/* ───────────── Type recipes (sizes tuned for a 1440px desktop) ───────────── */
 
-/* Centred content wrapper */
-.site-container {
-  width: min(100%, 1280px);
-  margin-left: auto !important;
-  margin-right: auto !important;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-
-/* Bento cell inner padding */
-.bento-pad {
-  padding: 1.5rem 1.5rem 1.5rem 2.5rem;
-}
-
-.bento-pad-lg {
-  padding: 2rem 2rem 2rem 3rem;
-}
-
-/* Glass card utility */
-.glass {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(26, 22, 20, 0.08);
-  border-radius: 32px;
-}
-
-/* Text utilities */
-.text-allcaps {
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+@utility type-display {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
   font-weight: 500;
+  font-size: clamp(2.75rem, 6.11111vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-/* Selection */
+@utility type-heading {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: clamp(2.5rem, 2.41667rem + 0.911111vw, 3.75rem);
+  line-height: 1;
+  letter-spacing: -0.0116em;
+}
+
+@utility type-footer-heading {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: clamp(2rem, 1.5rem + 1vw, 2.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+@utility type-stat {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: clamp(2rem, 1.25rem + 1.6vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+@utility type-card-heading {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+}
+
+/* Section title inside an app surface (dashboard groups, queues) */
+@utility type-section-heading {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* Title of a panel, card or small dialog section */
+@utility type-panel-heading {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+/* The "Remember US" wordmark in the header and footer */
+@utility type-wordmark {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: 19px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+@utility type-support {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+@utility type-action {
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+@utility type-body {
+  font-family: var(--font-text-face), "Inter", Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+@utility type-caption {
+  font-family: var(--font-text-face), "Inter", Arial, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  letter-spacing: -0.005em;
+}
+
+@utility type-utility {
+  font-family: var(--font-text-face), "Inter", Arial, sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.015em;
+}
+
+@utility type-utility-heading {
+  font-family: var(--font-text-face), "Inter", Arial, sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+/* ───────────── Chapter rhythm ───────────── */
+
+/* Vertical padding of a landing chapter: 64px on phones, 80px from md. One place to tune the rhythm. */
+@utility py-chapter {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+  @media (width >= 48rem) {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+/* Hide the scrollbar of a horizontal swipe row (it stays scrollable by touch, trackpad and keyboard). */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ───────────── Capsule actions ───────────── */
+
+@utility pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 10px 24px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  font-family: var(--font-display-face), "Aeonik Pro", "DM Sans", Arial, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 22px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 300ms cubic-bezier(0.15, 0.5, 0.5, 1),
+              background-color 300ms cubic-bezier(0.15, 0.5, 0.5, 1),
+              color 300ms cubic-bezier(0.15, 0.5, 0.5, 1);
+  &:hover { opacity: 0.85; }
+  &:active { opacity: 0.75; }
+  &:focus-visible {
+    outline: 2px solid --theme(--color-bronze-deep inline);
+    outline-offset: 2px;
+  }
+}
+
+/* Dark capsule — primary action on light surfaces */
+@utility pill-dark {
+  background: --theme(--color-ink inline);
+  color: --theme(--color-white inline);
+}
+
+/* Soft capsule — secondary action on light surfaces */
+@utility pill-soft {
+  background: color-mix(in srgb, --theme(--color-ink inline) 7%, transparent);
+  color: --theme(--color-ink inline);
+}
+
+/* Light capsule — action on the dark ink surface; the ring turns linen so it reads on ink (bronze is 2.5:1 there) */
+@utility pill-light {
+  background: --theme(--color-white inline);
+  color: --theme(--color-ink inline);
+  /* doubled pseudo-class: wins over .pill:focus-visible whatever order the utilities are emitted in */
+  &:focus-visible:focus-visible {
+    outline-color: --theme(--color-linen inline);
+  }
+}
+
+/* ───────────── Layout ───────────── */
+
+/* 1000px centred content region of the sculpted layout, 16px gutter on phones */
+.content-1000 {
+  width: min(100% - 32px, 1000px);
+  margin-left: auto;
+  margin-right: auto;
+}
+
 ::selection {
-  background: rgba(139, 0, 0, 0.15);
-  color: #1A1614;
+  background: color-mix(in srgb, --theme(--color-bronze inline) 25%, transparent);
+  color: inherit;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* ───────────── Hero ───────────── */
+
+/* Ivory wash over the hero photo. Phones: an even 90% veil (secondary text stays above 4.5:1).
+   From md: solid behind the copy column (≈52%), clearing towards the device. */
+@utility hero-wash {
+  background: color-mix(in srgb, --theme(--color-canvas inline) 90%, transparent);
+  @media (width >= 48rem) {
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, --theme(--color-canvas inline) 97%, transparent) 0%,
+      color-mix(in srgb, --theme(--color-canvas inline) 92%, transparent) 52%,
+      color-mix(in srgb, --theme(--color-canvas inline) 35%, transparent) 70%,
+      transparent 85%
+    );
+  }
+}
+
+/* Brushed warm-metal frame of the hero phone, mixed from the palette (soft → stone → soft → deeper stone). */
+@utility device-bezel {
+  background: linear-gradient(
+    160deg,
+    --theme(--color-soft inline) 0%,
+    color-mix(in srgb, --theme(--color-ink inline) 30%, --theme(--color-soft inline)) 38%,
+    color-mix(in srgb, --theme(--color-canvas inline) 70%, --theme(--color-soft inline)) 70%,
+    color-mix(in srgb, --theme(--color-ink inline) 40%, --theme(--color-soft inline)) 100%
+  );
+}
+
+/* Warm bronze light behind the framed living portrait (decoration; text near it stays ink). */
+@utility glow-bronze {
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, --theme(--color-bronze inline) 22%, transparent) 0%,
+    color-mix(in srgb, --theme(--color-bronze inline) 7%, transparent) 45%,
+    transparent 70%
+  );
+}
+
+/* Ivory light pool that keeps the closing band's copy legible over the meadow photo. */
+@utility cta-pool {
+  background: radial-gradient(
+    ellipse 110% 62% at 50% 34%,
+    color-mix(in srgb, --theme(--color-canvas inline) 94%, transparent) 0%,
+    color-mix(in srgb, --theme(--color-canvas inline) 80%, transparent) 60%,
+    transparent 100%
+  );
+  @media (width >= 48rem) {
+    background: radial-gradient(
+      ellipse 60% 55% at 50% 38%,
+      color-mix(in srgb, --theme(--color-canvas inline) 88%, transparent) 0%,
+      color-mix(in srgb, --theme(--color-canvas inline) 55%, transparent) 55%,
+      transparent 100%
+    );
+  }
+}
+
+/* Entrance for the hero's supporting elements. Pure CSS, so it starts with the first paint instead of
+   after hydration; the headline (the LCP element) is never hidden. Set --hero-delay per element. */
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}
+@utility hero-in {
+  animation: hero-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--hero-delay, 0s) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}

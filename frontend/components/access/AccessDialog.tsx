@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { DialogShell } from '@/components/dashboard/DialogShell';
-import { BTN_DANGER, BTN_SECONDARY, FIELD, LABEL } from '@/components/dashboard/styles';
+import { BTN_DANGER, BTN_SECONDARY, ERROR_TEXT, FIELD, HINT, LABEL } from '@/components/ui/styles';
+
+const SECTION_HEADING = 'type-panel-heading text-ink';
 import { ConfirmBox } from './ConfirmBox';
 import { QrPanel } from './QrPanel';
 import { useAccess } from './useAccess';
@@ -31,21 +33,21 @@ export const AccessDialog = ({ slug, onClose, onSlugChanged }: AccessDialogProps
   const busyAny = a.busy !== null;
   return (
     <DialogShell title="Link & QR code" titleId="access-dialog-title" onClose={onClose} busy={busyAny}>
-      <p role="alert" className="text-[#8B0000] text-sm empty:hidden">{a.error}</p>
-      {a.loading && <p className="text-[#6B6560] text-sm" role="status">Loading…</p>}
+      <p role="alert" className={`${ERROR_TEXT} empty:hidden`}>{a.error}</p>
+      {a.loading && <p className={HINT} role="status">Loading…</p>}
 
       {a.data && (
         <>
           <section aria-labelledby="access-link-heading" className="flex flex-col gap-3">
-            <h3 id="access-link-heading" className="text-[#6B6560] text-[11px] uppercase tracking-widest font-medium">
+            <h3 id="access-link-heading" className={SECTION_HEADING}>
               Private link
             </h3>
             <label htmlFor="access-link" className={LABEL}>Share this link with family and friends</label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input id="access-link" readOnly value={a.data.memorial_url} className={`${FIELD} font-mono text-xs`} />
-              <button type="button" onClick={() => void copy(a.data!.memorial_url)} className={BTN_SECONDARY}>Copy</button>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <input id="access-link" readOnly value={a.data.memorial_url} className={`${FIELD} font-mono`} />
+              <button type="button" onClick={() => void copy(a.data!.memorial_url)} className={`${BTN_SECONDARY} shrink-0`}>Copy</button>
             </div>
-            <p role="status" className="text-[#2F6B4F] text-sm empty:hidden">{copied}</p>
+            <p role="status" className="type-caption text-sage empty:hidden">{copied}</p>
             <div>
               <button type="button" disabled={busyAny || resetting} onClick={() => setResetting(true)} className={BTN_DANGER}>
                 Reset link
@@ -61,7 +63,7 @@ export const AccessDialog = ({ slug, onClose, onSlugChanged }: AccessDialogProps
               >
                 <p>Anyone using the old link will lose access. Your QR code keeps working.</p>
                 {a.data.qr.legacy_link_qr && (
-                  <p className="font-medium text-[#8B0000]">
+                  <p className="font-medium text-danger">
                     A QR code created before this update may contain the old link and would stop working.
                   </p>
                 )}
@@ -69,13 +71,13 @@ export const AccessDialog = ({ slug, onClose, onSlugChanged }: AccessDialogProps
             )}
           </section>
 
-          <div className="h-px bg-[#1A1614]/[0.08]" />
+          <div className="h-px bg-ink/10" />
 
           <section aria-labelledby="access-qr-heading" className="flex flex-col gap-3">
-            <h3 id="access-qr-heading" className="text-[#6B6560] text-[11px] uppercase tracking-widest font-medium">
+            <h3 id="access-qr-heading" className={SECTION_HEADING}>
               QR code
             </h3>
-            <p className="text-[#6B6560] text-sm">The QR code opens the memorial even if you reset the link.</p>
+            <p className="type-caption text-muted">The QR code opens the memorial even if you reset the link.</p>
             <QrPanel
               qr={a.data.qr}
               busy={a.busy}

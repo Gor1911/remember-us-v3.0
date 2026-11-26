@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { auth } from '@/app/lib/api';
+import { LINK, NOTICE_ERROR, NOTICE_SUCCESS } from '@/components/ui/styles';
 import { FIELD_CLASS, LABEL_CLASS, SUBMIT_CLASS } from './fieldStyles';
 
 export const ForgotPasswordForm = () => {
@@ -25,11 +26,11 @@ export const ForgotPasswordForm = () => {
 
   if (sent) {
     return (
-      <div role="status" className="flex flex-col gap-5">
-        <p className="text-[#1A1614] text-base leading-relaxed">
+      <div role="status" className="flex flex-col gap-5 items-start">
+        <p className={NOTICE_SUCCESS}>
           If an account exists for that email, we&apos;ve sent a link to reset your password.
         </p>
-        <Link href="/" className="text-[#8B0000] underline underline-offset-2 text-base">Back to home</Link>
+        <Link href="/" className={`${LINK} type-body`}>Back to home</Link>
       </div>
     );
   }
@@ -46,7 +47,7 @@ export const ForgotPasswordForm = () => {
         />
       </div>
       <div aria-live="assertive">
-        {error && <p id="fp-error" className="text-[#8B0000] text-sm">{error}</p>}
+        {error && <p id="fp-error" className={NOTICE_ERROR}>{error}</p>}
       </div>
       <button type="submit" disabled={busy || !email.trim()} className={SUBMIT_CLASS}>
         {busy ? 'Sending…' : 'Send reset link'}

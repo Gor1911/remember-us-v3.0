@@ -39,15 +39,15 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <ModalProvider>
-      <Header />
+      <Header overlay />
       <AccountDeletedNotice />
-      <main className="bg-[#FAF8F5]">
+      <main id="main" className="bg-canvas">
         <HeroSection />
         <LivingPortraitSection />
         <FeaturesSection />
+        <QrSection />
         <HowItWorksSection />
         <PricingSection />
-        <QrSection />
         <FaqSection />
         <CtaBanner />
       </main>

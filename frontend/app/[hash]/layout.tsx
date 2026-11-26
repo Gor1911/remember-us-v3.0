@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { API_BASE } from '@/app/lib/config';
+import { getGuestMemorial } from '@/app/lib/serverMemorial';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,25 +22,13 @@ const GENERIC_SOCIAL = {
   },
 };
 
-interface MemorialEnvelope {
-  success: boolean;
-  data?: { first_name?: string; last_name?: string; full_name?: string };
-}
-
 export async function generateMetadata({ params }: LayoutProps): Promise<Metadata> {
   const { hash } = await params;
-  try {
-    const res = await fetch(`${API_BASE}/pages/${encodeURIComponent(hash)}/`, { cache: 'no-store' });
-    if (res.ok) {
-      const json = (await res.json()) as MemorialEnvelope;
-      if (json.success && json.data) {
-        const { first_name, last_name, full_name } = json.data;
-        const name = [first_name, last_name].filter(Boolean).join(' ') || full_name;
-        if (name) return { title: `In Memory of ${name}`, robots: ROBOTS, ...GENERIC_SOCIAL };
-      }
-    }
-  } catch {
-    // fall through to generic title
+  // Same request as the page body (deduplicated by `cache`).
+  const memorial = await getGuestMemorial(hash);
+  if (memorial) {
+    const name = [memorial.first_name, memorial.last_name].filter(Boolean).join(' ') || memorial.full_name;
+    if (name) return { title: `In memory of ${name}`, robots: ROBOTS, ...GENERIC_SOCIAL };
   }
   return { title: 'Memorial', robots: ROBOTS, ...GENERIC_SOCIAL };
 }

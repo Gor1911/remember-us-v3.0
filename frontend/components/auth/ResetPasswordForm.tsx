@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { auth } from '@/app/lib/api';
 import { useModal } from '@/app/context/ModalContext';
+import { LINK, NOTICE_ERROR, NOTICE_SUCCESS } from '@/components/ui/styles';
 import { FIELD_CLASS, LABEL_CLASS, SUBMIT_CLASS } from './fieldStyles';
 
 const noopSubscribe = () => () => {};
@@ -47,10 +48,10 @@ export const ResetPasswordForm = () => {
   if (done) {
     return (
       <div role="status" className="flex flex-col gap-5 items-start">
-        <p className="text-[#1A1614] text-base leading-relaxed">Your password has been changed.</p>
+        <p className={`${NOTICE_SUCCESS} self-stretch`}>Your password has been changed.</p>
         <button
           type="button" onClick={() => openAuth('/dashboard')}
-          className="text-[#8B0000] underline underline-offset-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]"
+          className={`${LINK} type-body`}
         >
           Sign in
         </button>
@@ -60,9 +61,9 @@ export const ResetPasswordForm = () => {
 
   if (missing || expired) {
     return (
-      <div role="alert" className="flex flex-col gap-5">
-        <p className="text-[#8B0000] text-base leading-relaxed">{INVALID_LINK}</p>
-        <Link href="/forgot-password" className="text-[#8B0000] underline underline-offset-2 text-base">
+      <div role="alert" className="flex flex-col gap-5 items-start">
+        <p className={`${NOTICE_ERROR} self-stretch`}>{INVALID_LINK}</p>
+        <Link href="/forgot-password" className={`${LINK} type-body`}>
           Request a new link
         </Link>
       </div>
@@ -88,7 +89,7 @@ export const ResetPasswordForm = () => {
         />
       </div>
       <div aria-live="assertive">
-        {error && <p id="rp-error" className="text-[#8B0000] text-sm">{error}</p>}
+        {error && <p id="rp-error" className={NOTICE_ERROR}>{error}</p>}
       </div>
       <button type="submit" disabled={busy || !params || !password || !confirm} className={SUBMIT_CLASS}>
         {busy ? 'Saving…' : 'Change password'}

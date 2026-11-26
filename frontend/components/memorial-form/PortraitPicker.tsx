@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { CameraIcon, PersonIcon } from '@/components/dashboard/Icons';
+import { CameraIcon, PersonIcon } from '@/components/ui/icons';
+import { ERROR_TEXT, FOCUS, HINT, LINK } from '@/components/ui/styles';
 import type { PhotoEntry } from './formTypes';
 import { FORMATS_HINT, IMAGE_ACCEPT, screenImages } from './imageFiles';
 
@@ -11,8 +12,7 @@ interface PortraitPickerProps {
   onRemove: () => void;
 }
 
-const LINK_BUTTON =
-  'text-xs font-medium text-[#1A1614] underline underline-offset-4 hover:text-[#8B0000] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000]';
+const LINK_BUTTON = `type-caption font-medium ${LINK}`;
 
 /** Main photo of the memorial (page cover), kept apart from the gallery. */
 export const PortraitPicker = ({ portrait, onSelect, onRemove }: PortraitPickerProps) => {
@@ -27,44 +27,46 @@ export const PortraitPicker = ({ portrait, onSelect, onRemove }: PortraitPickerP
   };
 
   return (
-    <div className="flex flex-col items-center gap-2.5">
+    <div className="flex flex-col items-center gap-3 shrink-0">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         aria-label={portrait ? 'Replace main photo' : 'Add main photo'}
-        className={`relative w-36 aspect-[4/5] rounded-[20px] overflow-hidden transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8B0000] ${
+        className={`relative w-36 aspect-[4/5] rounded-tile overflow-hidden transition-colors duration-300 ${FOCUS} ${
           portrait
-            ? 'bg-[#F3F0EB] border border-[#1A1614]/[0.08]'
-            : 'border-2 border-dashed border-[#1A1614]/[0.15] bg-white/60 hover:border-[#1A1614]/30 hover:bg-white'
+            ? 'bg-soft'
+            : 'border-2 border-dashed border-ink/20 bg-canvas hover:border-ink/35 hover:bg-soft'
         }`}
       >
         {portrait ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={portrait.preview} alt="Main photo preview" className="w-full h-full object-cover" />
         ) : (
-          <span className="flex flex-col items-center justify-center gap-2 h-full px-3 text-[#6B6560]">
-            <span className="w-11 h-11 rounded-full bg-[#1A1614]/[0.05] flex items-center justify-center">
-              <PersonIcon className="w-5 h-5" />
+          <span className="flex flex-col items-center justify-center gap-2.5 h-full px-3">
+            <span className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-bronze">
+              <PersonIcon className="w-6 h-6" />
             </span>
-            <span className="text-xs font-medium text-[#1A1614]">Add main photo</span>
+            <span className="type-caption font-medium text-ink">Add main photo</span>
           </span>
         )}
         {portrait && (
-          <span className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-white/90 text-[#1A1614] flex items-center justify-center shadow-sm">
-            <CameraIcon className="w-3.5 h-3.5" />
+          <span className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white/90 text-ink flex items-center justify-center shadow-control">
+            <CameraIcon className="w-4 h-4" />
           </span>
         )}
       </button>
 
       {portrait ? (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button type="button" onClick={() => inputRef.current?.click()} className={LINK_BUTTON}>Replace</button>
           <button type="button" onClick={() => { setError(''); onRemove(); }} className={LINK_BUTTON}>Remove</button>
         </div>
       ) : (
-        <p className="text-muted text-[11px] text-center max-w-36">Optional. {FORMATS_HINT}</p>
+        <p className={`${HINT} text-center max-w-44`}>
+          Optional. A clear, front-facing photo works best — the living portrait is made from it. {FORMATS_HINT}.
+        </p>
       )}
-      {error && <p role="alert" className="text-[#8B0000] text-xs text-center max-w-48">{error}</p>}
+      {error && <p role="alert" className={`${ERROR_TEXT} text-center max-w-48`}>{error}</p>}
 
       <input
         ref={inputRef} type="file" accept={IMAGE_ACCEPT} className="hidden"

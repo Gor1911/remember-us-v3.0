@@ -1,9 +1,9 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+    <div className="min-h-screen bg-canvas flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-2 h-2 rounded-full bg-[#8B0000] animate-pulse" />
-        <p className="text-muted text-xs tracking-widest uppercase">Loading memorial…</p>
+        <div className="w-2 h-2 rounded-full bg-bronze animate-pulse motion-reduce:animate-none" />
+        <p className="type-caption text-muted">Opening the memorial…</p>
       </div>
     </div>
   );

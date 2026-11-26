@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CheckIcon, CloseIcon } from '@/components/ui/icons';
+import { FOCUS } from '@/components/ui/styles';
 
 export function AccountDeletedNotice() {
   const [visible, setVisible] = useState(false);
@@ -19,18 +21,17 @@ export function AccountDeletedNotice() {
   return (
     <div
       role="status"
-      className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md glass rounded-[16px] px-5 py-3.5 flex items-center justify-between gap-4 shadow-sm"
+      className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md bg-white text-ink rounded-[16px] pl-4 pr-3 py-3 flex items-center gap-3 shadow-card"
     >
-      <p className="text-[#1A1614] text-[15px]">Your account has been deleted.</p>
+      <CheckIcon className="w-6 h-6 shrink-0 text-sage" />
+      <p className="flex-1 type-body text-ink">Your account has been deleted.</p>
       <button
         type="button"
         onClick={() => setVisible(false)}
         aria-label="Dismiss"
-        className="text-[#6B6560] hover:text-[#1A1614] rounded-md focus-visible:outline-2 focus-visible:outline-[#8B0000]"
+        className={`shrink-0 grid place-items-center w-11 h-11 -m-1.5 rounded-full bg-ink/[0.06] text-ink hover:bg-ink/10 transition-colors ${FOCUS}`}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" className="w-5 h-5" aria-hidden="true">
-          <path d="M6 6l12 12M18 6L6 18" />
-        </svg>
+        <CloseIcon className="w-4 h-4" />
       </button>
     </div>
   );

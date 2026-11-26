@@ -19,6 +19,11 @@ if (publicHost) {
   remotePatterns.push({ protocol: "https", hostname: publicHost, pathname: "/media/**" });
 }
 
+// S3 bucket host for presigned media URLs, e.g. remember-us-media.s3.us-east-1.amazonaws.com
+// (keep in sync with canOptimizeImage in app/lib/config.ts).
+const s3Host = process.env.NEXT_PUBLIC_S3_MEDIA_HOST || "";
+if (s3Host) remotePatterns.push({ protocol: "https", hostname: s3Host, pathname: "/**" });
+
 // Routes that are NOT memorial slugs (single-segment top-level paths).
 const NON_MEMORIAL =
   'example|terms|privacy|dashboard|memorial|forgot-password|reset-password|q|success|_next|images|api|media|favicon.ico|robots.txt|sitemap.xml';
@@ -32,6 +37,9 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Pin the workspace root: otherwise Turbopack may infer the repo root (no package.json there)
+  // and fail to resolve `@import "tailwindcss"` from globals.css.
+  turbopack: { root: __dirname },
   images: { remotePatterns },
   async headers() {
     return [
