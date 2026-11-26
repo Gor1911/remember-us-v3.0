@@ -109,6 +109,15 @@ class MemorialPage(BaseModel):
         related_name="approved_pages",
     )
     approved_at = models.DateTimeField(null=True, blank=True)
+    published_snapshot = models.JSONField(
+        null=True,
+        blank=True,
+        editable=False,
+        help_text=(
+            "Last admin-approved content (see apps.pages.snapshot). Guests see it "
+            "while a newer owner edit is in review."
+        ),
+    )
 
     class Meta:
         verbose_name = "Memorial Page"
@@ -157,7 +166,10 @@ class MemorialPage(BaseModel):
         self.save(update_fields=["state", "updated_at"])
 
     def approve(self, admin_user) -> None:
-        """Move MODERATION → ACTIVE. Admin-only action."""
+        """Move MODERATION → ACTIVE and store the approved content as the guest snapshot.
+
+        Admin-only action.
+        """
         from apps.users.models import UserRole
 
         if admin_user.role != UserRole.ADMIN:
@@ -168,13 +180,23 @@ class MemorialPage(BaseModel):
             )
         from django.utils import timezone
 
-        self.state = PageState.ACTIVE
-        self.approved_by = admin_user
-        self.approved_at = timezone.now()
-        self.save(update_fields=["state", "approved_by", "approved_at", "updated_at"])
+        with transaction.atomic():
+            self.state = PageState.ACTIVE
+            self.approved_by = admin_user
+            self.approved_at = timezone.now()
+            self.published_snapshot = self.build_published_snapshot()
+            self.save(
+                update_fields=[
+                    "state", "approved_by", "approved_at", "published_snapshot", "updated_at",
+                ]
+            )
 
     def reject(self, admin_user, note: str = "") -> None:
-        """Move MODERATION → DRAFT with a note."""
+        """Move MODERATION → DRAFT with a note.
+
+        The published snapshot is kept: a rejected edit of a live memorial does not
+        take the last approved version away from guests.
+        """
         from apps.users.models import UserRole
 
         if admin_user.role != UserRole.ADMIN:
@@ -190,7 +212,9 @@ class MemorialPage(BaseModel):
     def mark_edited_by_owner(self) -> None:
         """Any Owner edit on ACTIVE resets to MODERATION (rule requirement).
 
-        Callers must not invoke this for Admin edits; admins do not un-publish.
+        Guests keep seeing ``published_snapshot`` (the last approved version) until
+        an admin approves the edit. Callers must not invoke this for Admin edits;
+        admins do not un-publish.
         """
         if self.state == PageState.ACTIVE:
             self.state = PageState.MODERATION
@@ -210,6 +234,34 @@ class MemorialPage(BaseModel):
         self.hidden_reason = ""
         self.save(update_fields=["hidden_at", "hidden_reason", "updated_at"])
 
+    # --- Published snapshot ---
+
+    def build_published_snapshot(self) -> dict:
+        """Snapshot of the current guest-visible content (non-deleted rows only)."""
+        from django.utils import timezone
+
+        from apps.media.models import MediaFile
+
+        from .snapshot import SNAPSHOT_MEDIA_EXCLUDED_TYPES, build_snapshot
+
+        media_ids = (
+            MediaFile.objects.filter(page=self)
+            .exclude(media_type__in=SNAPSHOT_MEDIA_EXCLUDED_TYPES)
+            .values_list("id", flat=True)
+        )
+        return build_snapshot(
+            self,
+            TimelineEntry.objects.filter(page=self),
+            MilitaryAward.objects.filter(page=self),
+            media_ids,
+            captured_at=timezone.now(),
+        )
+
+    def refresh_published_snapshot(self) -> None:
+        """Re-capture the snapshot from live content (admin edit of an ACTIVE page)."""
+        self.published_snapshot = self.build_published_snapshot()
+        self.save(update_fields=["published_snapshot", "updated_at"])
+
     # --- Helpers ---
 
     @property
@@ -219,8 +271,30 @@ class MemorialPage(BaseModel):
 
     @property
     def is_publicly_visible(self) -> bool:
-        """ACTIVE, not hidden, not deleted: the only state guests may see."""
+        """ACTIVE, not hidden, not deleted: guests see the live record."""
         return self.state == PageState.ACTIVE and not self.is_hidden and not self.is_deleted
+
+    @property
+    def has_published_version(self) -> bool:
+        """True once an admin has approved the page at least once (snapshot exists)."""
+        return self.published_snapshot is not None
+
+    @property
+    def has_guest_version(self) -> bool:
+        """True when guests may open the page (live or last approved version).
+
+        Not hidden, not deleted, and either ACTIVE (live content) or carrying a
+        published snapshot (an edit in review or a rejected edit). Use this for
+        every guest gate.
+        """
+        if self.is_hidden or self.is_deleted:
+            return False
+        return self.state == PageState.ACTIVE or self.has_published_version
+
+    @property
+    def serves_snapshot_to_guests(self) -> bool:
+        """True when guests must get ``published_snapshot`` instead of live fields."""
+        return self.has_guest_version and self.state != PageState.ACTIVE
 
     @property
     def is_active(self) -> bool:

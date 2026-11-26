@@ -63,9 +63,9 @@ class ReportViewSet(viewsets.ViewSet):
         return [AllowAny()] if self.action == "create" else [IsAdmin()]
 
     def create(self, request: Request, slug: str | None = None) -> Response:
-        """File a report against an ACTIVE, visible page."""
+        """File a report against a page guests can see (live or last approved version)."""
         page = MemorialPage.objects.filter(slug=slug).first()
-        if page is None or not page.is_publicly_visible:
+        if page is None or not page.has_guest_version:
             raise NotFound("Page not found.")
         serializer = ReportCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

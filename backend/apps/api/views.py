@@ -45,6 +45,8 @@ from .serializers import (
     MemorialPageUpdateSerializer,
     UserCreateSerializer,
     UserDetailSerializer,
+    guest_media_files,
+    is_privileged,
 )
 
 logger = logging.getLogger(__name__)
@@ -245,8 +247,10 @@ class MemorialPageViewSet(viewsets.ViewSet):
             page, data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        _flag_owner_edit(request, page)
+        # One transaction: guests never observe unapproved content on an ACTIVE page.
+        with transaction.atomic():
+            serializer.save()
+            _flag_owner_edit(request, page)
         return success(
             MemorialPageDetailSerializer(page, context={"request": request}).data
         )
@@ -262,7 +266,13 @@ class MemorialPageViewSet(viewsets.ViewSet):
     def submit(self, request: Request, slug: str | None = None) -> Response:
         """Submit page for moderation (DRAFT → MODERATION)."""
         page = get_object_or_404(MemorialPage, slug=slug, owner=request.user)
-        if page.state == PageState.DRAFT and not page.is_paid and not request.user.is_admin:
+        # A page that was approved before (has a published version) resubmits edits for free.
+        if (
+            page.state == PageState.DRAFT
+            and not page.is_paid
+            and not page.has_published_version
+            and not request.user.is_admin
+        ):
             raise PaymentRequired()
         page.submit_for_moderation()
         return success({"state": page.state})
@@ -302,9 +312,13 @@ class MemorialPageViewSet(viewsets.ViewSet):
         url_path="scan",
     )
     def scan(self, request: Request, slug: str | None = None) -> Response:
-        """Public QR scan endpoint — throttled with the `scan` scope."""
-        page = get_object_or_404(MemorialPage, slug=slug, state=PageState.ACTIVE)
-        if page.is_hidden:
+        """Public QR scan endpoint — throttled with the `scan` scope.
+
+        Works for any page with a guest version (live, or last approved while an
+        edit is in review).
+        """
+        page = get_object_or_404(MemorialPage, slug=slug)
+        if not page.has_guest_version:
             raise NotFound("Page not found.")
 
         qr = QRCode.objects.filter(page=page).first()
@@ -365,7 +379,10 @@ class MediaFileViewSet(viewsets.ViewSet):
                 {"success": False, "error": "Not found.", "code": "NOT_FOUND"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        files = page.media_files.exclude(media_type=MediaType.LIVING_PORTRAIT)
+        if is_privileged(request, page):
+            files = page.media_files.exclude(media_type=MediaType.LIVING_PORTRAIT)
+        else:
+            files = guest_media_files(page)
         return success(
             MediaFileSerializer(files, many=True, context={"request": request}).data
         )
@@ -403,7 +420,7 @@ class MediaFileViewSet(viewsets.ViewSet):
                 caption=data["caption"],
                 alt_text=data["alt_text"],
             )
-        _flag_owner_edit(request, page)
+            _flag_owner_edit(request, page)
         return success(
             MediaFileSerializer(media, context={"request": request}).data,
             status_code=status.HTTP_201_CREATED,
@@ -415,8 +432,9 @@ class MediaFileViewSet(viewsets.ViewSet):
         media = get_object_or_404(
             MediaFile.objects.exclude(media_type=MediaType.LIVING_PORTRAIT), id=pk, page=page
         )
-        media.soft_delete()
-        _flag_owner_edit(request, page)
+        with transaction.atomic():
+            media.soft_delete()
+            _flag_owner_edit(request, page)
         return success(None, status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -437,9 +455,15 @@ def record_qr_scan(request: Request, qr: QRCode) -> None:
 
 
 def _flag_owner_edit(request: Request, page: MemorialPage) -> None:
-    """Send an ACTIVE page back to MODERATION, but only for non-admin (Owner) edits."""
+    """React to a content edit: Owner edits send an ACTIVE page back to MODERATION.
+
+    Guests keep the published snapshot meanwhile. Admin edits of an ACTIVE page
+    are approved by definition, so the snapshot is refreshed to include them.
+    """
     if not request.user.is_admin:
         page.mark_edited_by_owner()
+    elif page.state == PageState.ACTIVE:
+        page.refresh_published_snapshot()
 
 
 def _with_list_relations(qs: QuerySet) -> QuerySet:

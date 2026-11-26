@@ -152,13 +152,13 @@ class QRResolveViewSet(viewsets.ViewSet):
     throttle_scope: str | None = None  # `scan`, set in urls.py
 
     def resolve(self, request: Request, token: str | None = None) -> Response:
-        """Return {slug} for an active QR of a live page, otherwise one generic 404."""
+        """Return {slug} for an active QR of a page guests may see, otherwise one generic 404."""
         qr = (
             QRCode.objects.select_related("page")
             .filter(token=token or "", is_active=True)
             .first()
         )
-        if qr is None or not qr.page.is_publicly_visible:
+        if qr is None or not qr.page.has_guest_version:
             raise NotFound("Not found.")
         record_qr_scan(request, qr)
         return success({"slug": qr.page.slug})

@@ -62,7 +62,7 @@ class IsPageOwner(BasePermission):
 
 
 class CanAccessMemorialPage(BasePermission):
-    """Allow authenticated users to read ACTIVE pages; owners see all states."""
+    """Guests read pages with a guest version (live or last approved); owners see all states."""
 
     message = "This memorial page is not publicly available."
 
@@ -75,5 +75,6 @@ class CanAccessMemorialPage(BasePermission):
         if request.user.is_authenticated and obj.owner == request.user:
             return True
 
-        # Everyone else (including unauthenticated guests) sees only ACTIVE, non-hidden pages
-        return obj.is_publicly_visible
+        # Everyone else: ACTIVE pages, or the last approved version of a page whose
+        # newer edit is in review / rejected. Never hidden or deleted pages.
+        return obj.has_guest_version

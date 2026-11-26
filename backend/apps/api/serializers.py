@@ -1,15 +1,41 @@
 """DRF serializers — never expose internal IDs, use UUIDs only."""
 from __future__ import annotations
 
+from datetime import date
+from typing import Any
+
 from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.media.models import MediaFile, MediaType
-from apps.media.signing import signed_file_url
+from apps.media.signing import Audience, signed_file_url
 from apps.media.validators import detect_media_kind
-from apps.pages.models import AnimationStatus, MemorialPage, MilitaryAward, TimelineEntry
+from apps.pages.models import (
+    AnimationStatus,
+    MemorialPage,
+    MilitaryAward,
+    PageState,
+    TimelineEntry,
+)
+from apps.pages.snapshot import SNAPSHOT_PAGE_FIELDS, snapshot_media_ids
 from apps.qr.models import QRCode
 from apps.users.models import User
+
+
+def is_privileged(request: Any, page: MemorialPage) -> bool:
+    """True when the requester is the page owner or an admin (sees the live record)."""
+    user = getattr(request, "user", None)
+    return bool(
+        user and user.is_authenticated and (user.is_admin or page.owner_id == user.id)
+    )
+
+
+def media_audience(request: Any, page: MemorialPage) -> Audience:
+    """Signed-URL audience for media of this page shown to this requester."""
+    return "privileged" if is_privileged(request, page) else "guest"
+
 
 # --- User ---
 
@@ -78,20 +104,14 @@ class MediaFileSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "file_url"]
 
     def get_file_url(self, obj: MediaFile) -> str | None:
-        """Return absolute URL for the file."""
-        return signed_file_url(self.context.get("request"), obj, "media")
+        """Return an absolute signed URL (guest-scoped unless owner/admin)."""
+        request = self.context.get("request")
+        return signed_file_url(request, obj, "media", media_audience(request, obj.page))
 
     def to_representation(self, instance: MediaFile) -> dict:
         """Hide the original filename from everyone except the page owner and admins."""
         data = super().to_representation(instance)
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-        allowed = bool(
-            user
-            and user.is_authenticated
-            and (user.is_admin or instance.page.owner_id == user.id)
-        )
-        if not allowed:
+        if not is_privileged(self.context.get("request"), instance.page):
             data.pop("original_filename", None)
         return data
 
@@ -143,20 +163,85 @@ class MediaUploadSerializer(serializers.Serializer):
 
 # --- Timeline ---
 
+MAX_TIMELINE_ENTRIES = 30
+MAX_MILITARY_AWARDS = 30
+MIN_TIMELINE_YEAR = 1800
+
+
 class TimelineEntrySerializer(serializers.ModelSerializer):
+    """Read representation of a timeline entry."""
+
     class Meta:
         model = TimelineEntry
         fields = ["id", "year", "title", "description", "order"]
         read_only_fields = ["id"]
 
 
+class TimelineEntryWriteSerializer(serializers.Serializer):
+    """One timeline item in a create/update payload (order = list index)."""
+
+    year = serializers.IntegerField(min_value=MIN_TIMELINE_YEAR)
+    title = serializers.CharField(max_length=200)
+    description = serializers.CharField(
+        max_length=1000, required=False, allow_blank=True, default=""
+    )
+
+    def validate_year(self, value: int) -> int:
+        """No future years. Years outside the subject's lifetime are allowed."""
+        current = timezone.localdate().year
+        if value > current:
+            raise serializers.ValidationError(
+                f"Ensure this value is less than or equal to {current}."
+            )
+        return value
+
+
 # --- Military Awards ---
 
 class MilitaryAwardSerializer(serializers.ModelSerializer):
+    """Read representation of a military award."""
+
     class Meta:
         model = MilitaryAward
         fields = ["id", "name", "description", "awarded_date", "model_3d_url", "order"]
         read_only_fields = ["id"]
+
+
+class MilitaryAwardWriteSerializer(serializers.Serializer):
+    """One award in a create/update payload (order = list index)."""
+
+    name = serializers.CharField(max_length=200)
+    description = serializers.CharField(
+        max_length=1000, required=False, allow_blank=True, default=""
+    )
+    awarded_date = serializers.DateField(required=False, allow_null=True, default=None)
+
+    def validate_awarded_date(self, value: date | None) -> date | None:
+        """An award cannot be dated in the future."""
+        if value and value > timezone.localdate():
+            raise serializers.ValidationError("Award date cannot be in the future.")
+        return value
+
+
+def replace_timeline_and_awards(page: MemorialPage, validated_data: dict) -> None:
+    """Replace the page's timeline / awards when their key was sent (soft delete + create).
+
+    Pops ``timeline_entries`` and ``military_awards`` from ``validated_data``.
+    Must run inside the transaction that saves the page.
+    """
+    now = timezone.now()
+    entries = validated_data.pop("timeline_entries", None)
+    if entries is not None:
+        TimelineEntry.objects.filter(page=page).update(is_deleted=True, updated_at=now)
+        TimelineEntry.objects.bulk_create(
+            TimelineEntry(page=page, order=index, **item) for index, item in enumerate(entries)
+        )
+    awards = validated_data.pop("military_awards", None)
+    if awards is not None:
+        MilitaryAward.objects.filter(page=page).update(is_deleted=True, updated_at=now)
+        MilitaryAward.objects.bulk_create(
+            MilitaryAward(page=page, order=index, **item) for index, item in enumerate(awards)
+        )
 
 
 # --- QR ---
@@ -177,9 +262,10 @@ class QRCodeSerializer(serializers.ModelSerializer):
 # --- Memorial Page ---
 
 class MemorialPageListSerializer(serializers.ModelSerializer):
-    """Lightweight listing — no heavy nested data."""
+    """Lightweight listing (owner/admin only) — no heavy nested data."""
 
     owner = UserOwnerSerializer(read_only=True)
+    has_published_version = serializers.BooleanField(read_only=True)
     primary_portrait = serializers.SerializerMethodField()
     hidden = serializers.SerializerMethodField()
 
@@ -190,7 +276,7 @@ class MemorialPageListSerializer(serializers.ModelSerializer):
             "first_name", "last_name", "birth_date", "death_date",
             "owner", "primary_portrait", "moderation_note", "created_at",
             "is_paid", "package_type", "paid_at", "portrait_animation_status",
-            "hidden", "hidden_reason",
+            "hidden", "hidden_reason", "has_published_version",
         ]
         read_only_fields = fields
 
@@ -223,6 +309,7 @@ class MemorialPageDetailSerializer(serializers.ModelSerializer):
     full_name = serializers.ReadOnlyField()
     portrait_animated_url = serializers.SerializerMethodField()
     hidden = serializers.SerializerMethodField()
+    has_published_version = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = MemorialPage
@@ -235,13 +322,14 @@ class MemorialPageDetailSerializer(serializers.ModelSerializer):
             "owner", "approved_at", "memorial_url",
             "timeline_entries", "military_awards", "media_files", "qr_code",
             "is_paid", "package_type", "paid_at", "hidden", "hidden_reason",
-            "created_at", "updated_at",
+            "has_published_version", "created_at", "updated_at",
         ]
         read_only_fields = fields
 
     # Visible only to the page owner and admins.
     PRIVATE_FIELDS = (
         "is_paid", "package_type", "paid_at", "hidden", "hidden_reason", "qr_code",
+        "has_published_version",
     )
 
     def get_hidden(self, obj: MemorialPage) -> bool:
@@ -259,23 +347,75 @@ class MemorialPageDetailSerializer(serializers.ModelSerializer):
         )
         if video is None:
             return None
-        return signed_file_url(self.context.get("request"), video, "media")
+        request = self.context.get("request")
+        return signed_file_url(request, video, "media", media_audience(request, obj))
 
     def to_representation(self, instance: MemorialPage) -> dict:
-        """Strip owner/admin-only fields for everyone else; keep the gallery video-free."""
+        """Strip owner/admin-only fields for everyone else; keep the gallery video-free.
+
+        Guests of a page whose newer edit is not approved get the published snapshot
+        instead of the live content (same keys, state reported as ``active``).
+        """
         data = super().to_representation(instance)
         data["media_files"] = [
             m for m in data["media_files"] if m["media_type"] != MediaType.LIVING_PORTRAIT
         ]
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-        privileged = bool(
-            user and user.is_authenticated and (user.is_admin or instance.owner_id == user.id)
-        )
-        if not privileged:
+        if not is_privileged(self.context.get("request"), instance):
+            if instance.serves_snapshot_to_guests:
+                self._apply_snapshot(instance, data)
             for field in self.PRIVATE_FIELDS:
                 data.pop(field, None)
         return data
+
+    def _apply_snapshot(self, instance: MemorialPage, data: dict) -> None:
+        """Overwrite owner-editable content with the last approved version."""
+        snapshot = instance.published_snapshot or {}
+        page_data = snapshot.get("page", {})
+        for field in SNAPSHOT_PAGE_FIELDS:
+            data[field] = page_data.get(field)
+        first, last = page_data.get("first_name") or "", page_data.get("last_name") or ""
+        data["full_name"] = f"{first} {last}".strip()
+        data["timeline_entries"] = [
+            {key: item.get(key) for key in ("id", "year", "title", "description", "order")}
+            for item in snapshot.get("timeline_entries", [])
+        ]
+        data["military_awards"] = [
+            {
+                "id": item.get("id"),
+                "name": item.get("name"),
+                "description": item.get("description"),
+                "awarded_date": item.get("awarded_date"),
+                "model_3d_url": item.get("model_3d_url") or "",
+                "order": item.get("order"),
+            }
+            for item in snapshot.get("military_awards", [])
+        ]
+        data["media_files"] = MediaFileSerializer(
+            guest_snapshot_media(instance), many=True, context=self.context
+        ).data
+        data["state"] = PageState.ACTIVE.value
+        data["updated_at"] = snapshot.get("captured_at") or data.get("updated_at")
+
+
+def guest_snapshot_media(page: MemorialPage) -> list[MediaFile]:
+    """Media of the published snapshot, soft-deleted rows included (gallery order)."""
+    ids = snapshot_media_ids(page.published_snapshot)
+    if not ids:
+        return []
+    return list(
+        MediaFile.all_objects.select_related("page")
+        .filter(page=page, id__in=ids)
+        .exclude(media_type=MediaType.LIVING_PORTRAIT)
+    )
+
+
+def guest_media_files(page: MemorialPage) -> list[MediaFile]:
+    """Gallery media a guest may see for this page (snapshot or live)."""
+    if page.serves_snapshot_to_guests:
+        return guest_snapshot_media(page)
+    return list(
+        page.media_files.select_related("page").exclude(media_type=MediaType.LIVING_PORTRAIT)
+    )
 
 
 _DATE_PAIRS: tuple[tuple[str, str, str], ...] = (
@@ -284,10 +424,25 @@ _DATE_PAIRS: tuple[tuple[str, str, str], ...] = (
 )
 
 
-class MemorialPageContentMixin:
-    """Content rules shared by create and update: biography length, date order."""
+class MemorialPageContentMixin(serializers.Serializer):
+    """Content rules shared by create and update: biography, date order, timeline, awards.
+
+    ``timeline_entries`` / ``military_awards``: when present, the list replaces the
+    page's existing rows entirely (order = list index); when absent, rows are untouched.
+    """
 
     instance: MemorialPage | None
+
+    timeline_entries = serializers.ListField(
+        child=TimelineEntryWriteSerializer(),
+        required=False,
+        max_length=MAX_TIMELINE_ENTRIES,
+    )
+    military_awards = serializers.ListField(
+        child=MilitaryAwardWriteSerializer(),
+        required=False,
+        max_length=MAX_MILITARY_AWARDS,
+    )
 
     def validate_biography(self, value: str) -> str:
         """Trim and require a meaningful biography (same rule as the create form)."""
@@ -323,12 +478,24 @@ class MemorialPageCreateSerializer(MemorialPageContentMixin, serializers.ModelSe
             "page_type", "first_name", "last_name",
             "birth_date", "death_date", "biography",
             "military_rank", "military_branch", "service_start", "service_end",
+            "timeline_entries", "military_awards",
         ]
 
     def create(self, validated_data: dict) -> MemorialPage:
-        """Assign owner; the slug is generated by MemorialPage.save()."""
+        """Assign owner and create timeline/awards in one transaction.
+
+        The slug is generated by MemorialPage.save().
+        """
         request = self.context["request"]
-        return MemorialPage.objects.create(owner=request.user, **validated_data)
+        children = {
+            key: validated_data.pop(key)
+            for key in ("timeline_entries", "military_awards")
+            if key in validated_data
+        }
+        with transaction.atomic():
+            page = MemorialPage.objects.create(owner=request.user, **validated_data)
+            replace_timeline_and_awards(page, children)
+        return page
 
 
 class MemorialPageUpdateSerializer(MemorialPageContentMixin, serializers.ModelSerializer):
@@ -339,13 +506,19 @@ class MemorialPageUpdateSerializer(MemorialPageContentMixin, serializers.ModelSe
         fields = [
             "first_name", "last_name", "birth_date", "death_date", "biography",
             "military_rank", "military_branch", "service_start", "service_end",
+            "timeline_entries", "military_awards",
         ]
 
     def update(self, instance: MemorialPage, validated_data: dict) -> MemorialPage:
-        """Apply field updates. Re-moderation is decided by the view (owner only)."""
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        """Apply field updates and list replacements atomically.
+
+        Re-moderation is decided by the view (owner only).
+        """
+        with transaction.atomic():
+            replace_timeline_and_awards(instance, validated_data)
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
         return instance
 
 
